@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdio.h>
+//#include <stdint.h>
+
 #include "nvm.h"
 
 #define NvmTotalSize 0x8000 //32kb
@@ -9,98 +9,73 @@
 #define NvmWordSize 8
 #define NvmSectorSize 256 //4096
 
-
-
-
-typedef struct NvmWord NvmWord;
-struct NvmWord {
+typedef struct NvmWord {
     uint8_t wordArray[NvmWordSize];
-    bool wordErasedStatus;
-};
+}NvmWord;
 
-typedef struct NvmSector NvmSector;
-struct NvmSector{
+typedef struct NvmSector{
     NvmWord sectorArray[NvmSectorSize/NvmWordSize];
-};
+}NvmSector;
 
-typedef struct NvmImage NvmImage;
-struct NvmImage {
+
+typedef struct NvmImage {
     NvmSector nvmContent[NvmTotalSize/NvmSectorSize];
-};
+} NvmImage;
 
-static NvmImage *nvmImage;
-void init(){
-    nvmImage = (NvmImage *)malloc(sizeof(NvmImage));
-}
-
-typedef struct NvmAddrProperties NvmAddrProperties;
-struct NvmAddrProperties{
+typedef struct NvmAddrProperties{
     uint16_t sectorId;
     uint16_t wordId;
     uint8_t offset;
-};
+}NvmAddrProperties;
+
+//one image for all the program
+static NvmImage *nvmImage;
+
+//allocate the image
+void init_nvm(){
+    nvmImage = (NvmImage *)malloc(sizeof(NvmImage));
+}
 
 //convert address to word
-void nvmIdentifyAddr(uint32_t address, NvmAddrProperties *addressId){
+void nvmIdentifyAddr(const uint16_t address, NvmAddrProperties *addressId){
     if (address ==0) {
         addressId->sectorId = 0;
         addressId->wordId = 0;
         addressId->offset = 0;
     } else {
-        addressId->sectorId = (uint16_t)(address/ (uint32_t)NvmSectorSize);
-        addressId->wordId = (uint16_t)((address - (uint32_t)NvmSectorSize*addressId->sectorId) / (uint32_t)NvmWordSize);
-        addressId->offset = (uint8_t)(address - (uint32_t)(NvmSectorSize * addressId->sectorId)- (uint32_t)((uint16_t)NvmWordSize * addressId->wordId));
+        addressId->sectorId = (uint16_t)(address/ (uint16_t)NvmSectorSize);
+        addressId->wordId = (uint16_t)((address - (uint16_t)NvmSectorSize*addressId->sectorId) / (uint16_t)NvmWordSize);
+        addressId->offset = (uint8_t)(address - (uint16_t)(NvmSectorSize * addressId->sectorId)- (uint16_t)((uint16_t)NvmWordSize * addressId->wordId));
     }
 }
 
 //checkers
-string nvmCheckAccess(uint32_t address){
+string nvmCheckAccess(const uint16_t address){
     if (address > NvmTotalSize){
         return "ERR>NVM_CHECK_ACCESS_INVALID_ADDRESS";
     }
     return NULL;
 }
-string nvmCheckErasedState(uint32_t address){
-    NvmAddrProperties addressProperties={0,0,0};
-    NvmAddrProperties *p = &addressProperties; 
-    //identify the proper elements
-    nvmIdentifyAddr(address, p);
-    //check that the word is in erased state
-    if (nvmImage->nvmContent[addressProperties.sectorId].sectorArray[addressProperties.wordId].wordErasedStatus != true ){
-		return "ERR>NVM_ERASED_STATE_INVALID";
-	}
-	return NULL;
-}
-
-//methods
-uint8_t nvmReader(uint32_t address){
-    string err = nvmCheckAccess(address);
-    if (err !=NULL){
-        //todo
-        return 0xFF;
+string nvmCheckSectorAccess(uint16_t length){
+    if (length > NvmSectorSize){
+        return "ERR>NVM_CHECK_SECTOR_ACCESS_INVALID";
     }
-    NvmAddrProperties addressProperties={0,0,0};
-    NvmAddrProperties *p = &addressProperties;
-    //identify the proper elements
-    nvmIdentifyAddr(address, p);
-    uint8_t data;
-    data = nvmImage->nvmContent[addressProperties.sectorId].sectorArray[addressProperties.wordId].wordArray[addressProperties.offset];
-	return data;
+    return NULL;
 }
+//erase methods
 void nvmEraseWord(NvmWord *nvmWord){
-    nvmWord->wordErasedStatus = true;
-    int size = sizeof(nvmWord->wordArray)/sizeof(uint8_t);
-    for(int index = 0; index < size; index++){
+    uint16_t size = sizeof(nvmWord->wordArray)/sizeof(uint8_t);
+    for(uint16_t index = 0; index < size; index++){
         nvmWord->wordArray[index] = NvmErasedValue;
     }
 }
 void nvmEraseSector(NvmSector *nvmSector){
-    int size = sizeof(nvmSector->sectorArray)/sizeof(NvmWord);
-    for(int index = 0; index < size; index++){
+    uint16_t size = sizeof(nvmSector->sectorArray)/sizeof(NvmWord);
+    for(uint16_t index = 0; index < size; index++){
         nvmEraseWord(&nvmSector->sectorArray[index]);
     }   
 }
-string nvmErase(uint32_t address){
+string nvmErase(const uint16_t address){
     string err = nvmCheckAccess(address);
     if (err != NULL){
         return err;
@@ -113,33 +88,43 @@ string nvmErase(uint32_t address){
 	//printf("Erased value is : ", nvmImage->NvmContent[addressProperties.sectorId])
 	printf("ERASED OK\n");
 	return NULL;
-
 }
-string nvmProgramByte(uint32_t address,uint8_t value){
+
+//read method
+string nvmRead(const uint16_t address, uint8_t *destBuffer, uint16_t length){
     string err = nvmCheckAccess(address);
-    if (err!=NULL){
-        return err;
+    if (err !=NULL){
+            return err;
+    }
+    err = nvmCheckSectorAccess(length);
+    if (err !=NULL){
+            return err;
     }
     NvmAddrProperties addressProperties={0,0,0};
     NvmAddrProperties *p = &addressProperties;
-    //identify the proper elements
-	nvmIdentifyAddr(address, p);
+    uint16_t addr = address;
+    //identify the proper sector and offset ids
+    nvmIdentifyAddr(addr, p);
 
-    err = nvmCheckErasedState(address);
-    if (err != NULL){
-        return err;
-    }
-    nvmImage->nvmContent[addressProperties.sectorId].sectorArray[addressProperties.wordId].wordArray[addressProperties.offset] = value;
-	nvmImage->nvmContent[addressProperties.sectorId].sectorArray[addressProperties.wordId].wordErasedStatus = false;
-	return NULL;
-}
-string nvmCheckWordLength(uint8_t *value,int len, uint8_t offset){
-    if (len > (int)(NvmWordSize-offset)){
-        return "ERR>INCORRECT LENGTH";
+    //read data in destBuffer
+    for(uint16_t i=0;i<length;i++){
+        destBuffer[i]=nvmImage->nvmContent[addressProperties.sectorId].sectorArray[addressProperties.wordId].wordArray[addressProperties.offset];
+        addr++;
+        nvmIdentifyAddr(addr, p);  
     }
     return NULL;
 }
-string nvmProgramWord(uint32_t address, uint8_t *value, int len){
+
+void copyToSector(NvmSector *srcSector, NvmSector *destSector){
+    for(uint16_t i=0;i< (NvmSectorSize/NvmWordSize);i++){
+        for(uint16_t j=0;j< NvmWordSize;j++){
+            destSector->sectorArray[i].wordArray[j] = srcSector->sectorArray[i].wordArray[j];
+        }
+    }
+}
+
+//write method
+string nvmWrite(const uint16_t address, uint8_t *srcBuffer, uint16_t len){
     string err = nvmCheckAccess(address);
     if (err!=NULL){
         return err;
@@ -149,19 +134,24 @@ string nvmProgramWord(uint32_t address, uint8_t *value, int len){
     //identify the proper elements
     nvmIdentifyAddr(address, p);
 
-    err = nvmCheckErasedState(address);
-    if (err!=NULL){
-        return err;
+    //copy the content of the Nvm sector in an intermediate sector
+    NvmSector intermediateSector;
+    copyToSector(&(nvmImage->nvmContent[p->sectorId]),&intermediateSector);
+    uint16_t addr = address;
+
+    //copy the range of source data into the intermediate sector
+    for(uint16_t i=0;i<len;i++){
+        intermediateSector.sectorArray[p->wordId].wordArray[p->offset] = srcBuffer[i];
+        addr++;
+        nvmIdentifyAddr(addr, p);  
     }
-    err = nvmCheckWordLength(value, len,addressProperties.offset);
-	if (err!=NULL){
-        return err;
-    }
-   
-    for(int i=0;i< len;i++){
-        nvmImage->nvmContent[addressProperties.sectorId].sectorArray[addressProperties.wordId].wordArray[addressProperties.offset+(uint8_t)i] = value[i];
-    }
-    nvmImage->nvmContent[addressProperties.sectorId].sectorArray[addressProperties.wordId].wordErasedStatus = false;
+    //erase the sector
+    nvmErase(address);
+    nvmIdentifyAddr(address, p);
+
+    //copy the content of the intermediateSector in the Nvm sector
+    copyToSector(&intermediateSector,&(nvmImage->nvmContent[p->sectorId]));
+    
 	return NULL;
 }
 
