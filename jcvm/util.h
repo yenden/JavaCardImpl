@@ -20,4 +20,7 @@ uint8_t readLow(uint8_t data);
 uint8_t readHighShift(uint8_t data);
 uint16_t  makeU2(uint8_t byte1, uint8_t byte2);
 
+uint8_t makeU1Low(uint16_t data);
+uint8_t makeU1High(uint16_t data);
+
 #endif

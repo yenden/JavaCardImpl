@@ -68,3 +68,11 @@ int16_t  getShortLow(int32_t value){
 	return value % 0x10000;
 }
 */
+uint8_t makeU1High(uint16_t data){
+	uint8_t byte1 = (uint8_t)((data & 0xFF00) >> 8);
+	return byte1;
+}
+uint8_t makeU1Low(uint16_t data){
+	uint8_t byte2 = (uint8_t)(data & 0x00FF);
+	return byte2;
+}

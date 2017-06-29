@@ -18,7 +18,8 @@ bool installImportComp(uint8_t dataBuffer[],CardApplet *newApplet);
 void installClassComp(uint8_t dataBuffer[],CardApplet *newApplet);
 void installRefLocComp(uint8_t dataBuffer[],CardApplet *newApplet);
 void installStaticFieldComp(uint8_t dataBuffer[],CardApplet *newApplet);
-void createStaticFieldImage(StaticFieldComponent ipStaticFieldComponent);
+void createArrayInMemory(uint16_t address, uint8_t type, uint16_t count, uint8_t *arrayInit);
+void createStaticFieldImage(StaticFieldComponent ipStaticFieldComponent, uint8_t *arrayRef);
 void installMethodComp(uint8_t dataBuffer[],CardApplet *newApplet);
 void installExportComponent(uint8_t dataBuffer[],CardApplet *newApplet);
 void installDescriptorComp(uint8_t dataBuffer[],CardApplet *newApplet);
@@ -305,48 +306,82 @@ void installStaticFieldComp(uint8_t dataBuffer[],CardApplet *newApplet){
     ipStaticFieldComponent.imageSize = readU2(dataBuffer, &iPosa);
     ipStaticFieldComponent.referenceCount = readU2(dataBuffer, &iPosa);
     ipStaticFieldComponent.arrayInitCount = readU2(dataBuffer, &iPosa);
-    for(uint16_t i=0;i<ipStaticFieldComponent.arrayInitCount;i++){
+
+    //the purpose of this is to keep the nvm addresses of initialized arrays.
+    uint8_t arrayRef[ipStaticFieldComponent.arrayInitCount * 2];
+    uint16_t iPosArray = 0;
+    uint16_t arryAddress = FLASH_STATIC_ARRAY_ADDRESS;
+
+    for(uint16_t i=0; i < ipStaticFieldComponent.arrayInitCount;i++){
         ipStaticFieldComponent.pArrayInit[i].typ = readU1(dataBuffer, &iPosa);
         ipStaticFieldComponent.pArrayInit[i].count = readU2(dataBuffer, &iPosa);
-        for(uint8_t j=0;j<  ipStaticFieldComponent.pArrayInit[i].count;j++){
+        for(uint8_t j=0;j < ipStaticFieldComponent.pArrayInit[i].count;j++){
             ipStaticFieldComponent.pArrayInit[i].pValues[j] = readU1(dataBuffer, &iPosa);
         }
+        //create the initialized array in nvm memory
+        createArrayInMemory(arryAddress, 
+                            ipStaticFieldComponent.pArrayInit[i].typ, 
+                            ipStaticFieldComponent.pArrayInit[i].count,
+                            ipStaticFieldComponent.pArrayInit[i].pValues
+                            );
+        //put the memory address (reference) in the arrayRef
+        arrayRef[iPosArray] = makeU1High(arryAddress);
+        iPosArray++;
+        arrayRef[iPosArray] = makeU1Low(arryAddress);
+        iPosArray++;
+        //move to next sector for the next initialized array
+        arryAddress += 256;
     }
     ipStaticFieldComponent.defaultValueCount = readU2(dataBuffer, &iPosa);
     ipStaticFieldComponent.nondefaultValueCount = readU2(dataBuffer, &iPosa);
     for(uint16_t i=0;i<ipStaticFieldComponent.nondefaultValueCount;i++){
         ipStaticFieldComponent.pnondefaultValues[i] = readU1(dataBuffer, &iPosa);
     }
-    createStaticFieldImage(ipStaticFieldComponent);
+    createStaticFieldImage(ipStaticFieldComponent, arrayRef);
     newApplet->absApp.pStaticField = ipStaticFieldComponent;
 }
-
+void createArrayInMemory(uint16_t address, uint8_t type, uint16_t count, uint8_t *arrayInit){
+    //write the header of the array (type and length) in the first byte
+    //and the arrayInit body in the second byte of the sector
+    uint8_t array[8 + count];
+    array[0] = type;
+    array[1] = makeU1High(count);
+    array[2] = makeU1Low(count);
+    for(uint16_t i = 8; i < count + 8; i++){
+       array[i] = arrayInit[i];
+    }
+    nvmWrite(address, array, 8 + count);
+}
 //create a static fiel image in non volatile memory
-void createStaticFieldImage(StaticFieldComponent ipStaticFieldComponent){
+void createStaticFieldImage(StaticFieldComponent ipStaticFieldComponent, uint8_t *arrayRef){
     uint8_t image[ipStaticFieldComponent.imageSize];
-    uint16_t i =0;
+    uint16_t i = 0;
+    uint16_t j = 0;
     //Build segment 1 and segment 2 data.
 	//Segment 1 - arrays of primitive types initialized by <clinit> methods.
+     for (i=0; i < ipStaticFieldComponent.arrayInitCount*2; i++){
+        image[i] = arrayRef[i];
+     }
 	//Segment 2 - reference types initialized to null, including arrays.
-    for (i=0;i<ipStaticFieldComponent.referenceCount*2;i++){
-        image[i] = 0;
+    for (j=i; j < ipStaticFieldComponent.referenceCount*2; j++){
+            image[j] = 0;
     }
     //Update segment 3
 	//Segment 3 - primitive types initialized to default values.
-    for (uint16_t j=0; j<ipStaticFieldComponent.defaultValueCount; j++){
-        image[i]=0;
-        i++;
+    for (uint16_t k = j; k < ipStaticFieldComponent.defaultValueCount; k++){
+        image[j]=0;
+        j++;
     }
     //Update segment 4
 	//Segment 4 - primitive types initialized to non-default values.
-    for(uint16_t j =0; j<ipStaticFieldComponent.nondefaultValueCount; j++){
-        image[i] = ipStaticFieldComponent.pnondefaultValues[j];
-        i++;
+    for(uint16_t k = 0; k < ipStaticFieldComponent.nondefaultValueCount; k++){
+        image[j] = ipStaticFieldComponent.pnondefaultValues[j];
+        j++;
     }
 
     //Fill buffer in flash memory
     //todo case if the size of image is > flash sector size 
-    nvmWrite(FLASH_START_ADDRESS,image,ipStaticFieldComponent.imageSize);
+    nvmWrite(FLASH_STATIC_IMAGE_ADDRESS,image,ipStaticFieldComponent.imageSize);
     
 }
 
