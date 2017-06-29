@@ -1,6 +1,6 @@
 #include "nvm.h"
 #include "../applet.h"
-#include "../vm/base.h"
+#include "../jcvm/util.h"
 
 
 void printArray(uint8_t *display,uint16_t len){
@@ -9,7 +9,7 @@ void printArray(uint8_t *display,uint16_t len){
     }
     printf("\n"); 
 }
-void fillIterationInWord(uint8_t *array,uint8_t i,uint16_t length){
+void fillIterationInWord(uint8_t *array, uint8_t i,uint16_t length){
     for (int j = 0; j < length; j++) {
 		array[j] = i;
 	}

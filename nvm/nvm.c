@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
-//#include <stdint.h>
+#include <stdio.h>
+#include "../addresses.h"
 
 #include "nvm.h"
 
@@ -30,11 +31,6 @@ typedef struct NvmAddrProperties{
 
 //one image for all the program
 static NvmImage *nvmImage;
-
-//allocate the image
-void init_nvm(){
-    nvmImage = (NvmImage *)malloc(sizeof(NvmImage));
-}
 
 //convert address to word
 void nvmIdentifyAddr(const uint16_t address, NvmAddrProperties *addressId){
@@ -88,6 +84,20 @@ string nvmErase(const uint16_t address){
 	//printf("Erased value is : ", nvmImage->NvmContent[addressProperties.sectorId])
 	printf("ERASED OK\n");
 	return NULL;
+}
+
+//allocate the image
+void init_nvm(){
+    nvmImage = (NvmImage *)malloc(sizeof(NvmImage));
+    //for the first use erase all the sectors
+    uint16_t j = 0;
+    for(uint16_t i = 0; i < (NvmTotalSize/NvmSectorSize); i++){
+         nvmErase(FLASH_START_ADDRESS + j);
+         j +=256;
+    }
+}
+void free_nvm(){
+    free(nvmImage);
 }
 
 //read method
