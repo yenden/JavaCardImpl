@@ -5,11 +5,6 @@
 
 #include "nvm.h"
 
-#define NvmTotalSize 0x8000 //32kb
-#define NvmErasedValue 0xFF
-#define NvmWordSize 8
-#define NvmSectorSize 256 //4096
-
 typedef struct NvmWord {
     uint8_t wordArray[NvmWordSize];
 }NvmWord;
@@ -82,7 +77,7 @@ string nvmErase(const uint16_t address){
 	nvmIdentifyAddr(address, p);
     nvmEraseSector(&nvmImage->nvmContent[addressProperties.sectorId]);
 	//printf("Erased value is : ", nvmImage->NvmContent[addressProperties.sectorId])
-	printf("ERASED OK\n");
+	//printf("ERASED OK\n");
 	return NULL;
 }
 
@@ -93,7 +88,7 @@ void init_nvm(){
     uint16_t j = 0;
     for(uint16_t i = 0; i < (NvmTotalSize/NvmSectorSize); i++){
          nvmErase(FLASH_START_ADDRESS + j);
-         j +=256;
+         j +=NvmSectorSize;
     }
 }
 void free_nvm(){

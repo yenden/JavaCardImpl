@@ -5,152 +5,7 @@
 #include "../util.h"
 #include "../../nvm/nvm.h"
 #include "../../addresses.h"
-#include "../../applet.h"
 
-#define applet_buff_length 1363
-
-//methods declaration
-void installer(uint8_t dataBuffer[], uint16_t length, CardApplet *newApplet);
-bool installHeaderComp(uint8_t dataBuffer[],CardApplet *newApplet, uint16_t* iPos);
-bool installDirComp(uint8_t dataBuffer[],CardApplet *newApplet, uint16_t * iPos);
-void installAppletComp(uint8_t dataBuffer[],CardApplet *newApplet);
-bool installImportComp(uint8_t dataBuffer[],CardApplet *newApplet);
-void installClassComp(uint8_t dataBuffer[],CardApplet *newApplet);
-void installRefLocComp(uint8_t dataBuffer[],CardApplet *newApplet);
-void installStaticFieldComp(uint8_t dataBuffer[],CardApplet *newApplet);
-void createArrayInMemory(uint16_t address, uint8_t type, uint16_t count, uint8_t *arrayInit);
-void createStaticFieldImage(StaticFieldComponent ipStaticFieldComponent, uint8_t *arrayRef);
-void installMethodComp(uint8_t dataBuffer[],CardApplet *newApplet);
-void installExportComponent(uint8_t dataBuffer[],CardApplet *newApplet);
-void installDescriptorComp(uint8_t dataBuffer[],CardApplet *newApplet);
-void installConstPoolComp(uint8_t dataBuffer[],CardApplet *newApplet);
-
-
-int main(void){
-    init_nvm(); //allocate memory for non volatile memory
-    CardApplet newApplet;
-    installer(applet, applet_buff_length, &newApplet);
-    free_nvm(); //free memory for non volatile memory
-    return 0;
-}
-
-void installer(uint8_t dataBuffer[], uint16_t length, CardApplet *newApplet){
-    uint16_t iPos = 0; //Position in applet buffer
-
-    bool headerInstall = installHeaderComp(dataBuffer,newApplet,&iPos);
-    if (!headerInstall){
-        return ;
-    }
-    bool dirInstall = installDirComp(dataBuffer,newApplet,&iPos);
-    if (!dirInstall){
-        return ;
-    }
-   
-    /*Split the IJC file into component blocks
-	*to facilitate component data manipulation.
-	 */
-    uint16_t appletCompSize = newApplet->absApp.pDir.componentSizes[TAG_APPLET_COMP - 1];
-    uint8_t pAppletComponent[appletCompSize];
-
-    uint16_t importCompSize = newApplet->absApp.pDir.componentSizes[TAG_IMPORT_COMP - 1];
-    uint8_t pImportComponent[importCompSize];
-
-    uint16_t constantPoolCompSize = newApplet->absApp.pDir.componentSizes[TAG_CONSTANTPOOL_COMP - 1];
-    uint8_t pConstPoolComponent[constantPoolCompSize];
-
-    uint16_t classCompSize = newApplet->absApp.pDir.componentSizes[TAG_CLASS_COMP - 1];
-    uint8_t pClassComponent[classCompSize];
-
-    uint16_t methodCompSize = newApplet->absApp.pDir.componentSizes[TAG_METHOD_COMP - 1];
-    uint8_t pMethodComponent[methodCompSize];
-
-    uint16_t staticFieldCompSize = newApplet->absApp.pDir.componentSizes[TAG_STATICFIELD_COMP - 1];
-    uint8_t pStaticFieldComponent[staticFieldCompSize];
-
-    uint16_t refLocCompSize = newApplet->absApp.pDir.componentSizes[TAG_REFERENCELOCATION_COMP - 1];
-    uint8_t pRefLocComponent[refLocCompSize];
-
-    uint16_t exportCompSize = newApplet->absApp.pDir.componentSizes[TAG_EXPORT_COMP - 1];
-    uint8_t pExportComponent[exportCompSize];
-
-    uint16_t descriptorCompSize = newApplet->absApp.pDir.componentSizes[TAG_DESCRIPTOR_COMP - 1];
-    uint8_t pDescriptorComponent[descriptorCompSize];
-
-    uint16_t debugCompSize = newApplet->absApp.pDir.componentSizes[TAG_DEBUG_COMP - 1];
-    uint8_t pDebugComponent[debugCompSize];
-
-    while(iPos < (length-1)){
-        uint8_t tag = readU1(dataBuffer, &iPos);
-        uint16_t compSize = readU2(dataBuffer, &iPos);
-        switch (tag){
-            case TAG_IMPORT_COMP:
-                for (uint16_t j=0;j<compSize;j++){
-                    pImportComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            case TAG_APPLET_COMP: 
-                for (uint16_t j=0;j<compSize;j++){
-                    pAppletComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            case TAG_CONSTANTPOOL_COMP: 
-                for (uint16_t j=0;j<compSize;j++){
-                    pConstPoolComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            case TAG_CLASS_COMP:
-                for (uint16_t j=0;j<compSize;j++){
-                    pClassComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            case TAG_METHOD_COMP:
-                for (uint16_t j=0;j<compSize;j++){
-                    pMethodComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            case TAG_STATICFIELD_COMP:
-                for (uint16_t j=0;j<compSize;j++){
-                    pStaticFieldComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            case TAG_REFERENCELOCATION_COMP:
-                for (uint16_t j=0;j<compSize;j++){
-                    pRefLocComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            case TAG_EXPORT_COMP:
-                for (uint16_t j=0;j<compSize;j++){
-                    pExportComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            case TAG_DESCRIPTOR_COMP:
-                for (uint16_t j=0;j<compSize;j++){
-                    pDescriptorComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            case TAG_DEBUG_COMP:
-                for (uint16_t j=0;j<compSize;j++){
-                    pDebugComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            default:
-                //nothing
-                break;
-        }
-    }
-    installAppletComp(pAppletComponent,newApplet);
-    bool importInstall = installImportComp(pImportComponent,newApplet);
-    if (!importInstall){
-        return;
-    }
-    installClassComp(pClassComponent,newApplet);
-    installConstPoolComp(pConstPoolComponent,newApplet);
-    installRefLocComp(pRefLocComponent,newApplet);
-    installStaticFieldComp(pStaticFieldComponent,newApplet);
-    installMethodComp(pMethodComponent,newApplet);
-    installExportComponent(pExportComponent,newApplet);
-    installDescriptorComp(pDescriptorComponent,newApplet);
-}
 
 //Header component installation
 bool installHeaderComp(uint8_t dataBuffer[],CardApplet *newApplet, uint16_t* iPos){
@@ -253,6 +108,7 @@ void installClassComp(uint8_t dataBuffer[],CardApplet *newApplet){
     //signature pool for remote methods.
     // In our subset we don't use remote methods
     // remote method parsing is in the JCVM go version
+    uint16_t sPoolLenght = readU2(dataBuffer, &iPosa);
     ClassComponent ipClassComponent;
     // In this subset we didn't consider interfaces
     //intefaces parsing is in the go version
@@ -282,7 +138,7 @@ void installClassComp(uint8_t dataBuffer[],CardApplet *newApplet){
 void installConstPoolComp(uint8_t dataBuffer[],CardApplet *newApplet){
     uint16_t iPosa =0;
     ConstantPoolComponent ipConstPoolComponent;
-    ipConstPoolComponent.count = readU1(dataBuffer, &iPosa);
+    ipConstPoolComponent.count = readU2(dataBuffer, &iPosa);
     for(uint16_t i=0;i<ipConstPoolComponent.count;i++){
         ipConstPoolComponent.constantPool[i].tag = readU1(dataBuffer, &iPosa);
         for(uint8_t j=0; j<3;j++){
@@ -330,7 +186,7 @@ void installStaticFieldComp(uint8_t dataBuffer[],CardApplet *newApplet){
         arrayRef[iPosArray] = makeU1Low(arryAddress);
         iPosArray++;
         //move to next sector for the next initialized array
-        arryAddress += 256;
+        arryAddress += NvmSectorSize;
     }
     ipStaticFieldComponent.defaultValueCount = readU2(dataBuffer, &iPosa);
     ipStaticFieldComponent.nondefaultValueCount = readU2(dataBuffer, &iPosa);
@@ -472,4 +328,123 @@ void installDescriptorComp(uint8_t dataBuffer[],CardApplet *newApplet){
         }
      }
      newApplet->absApp.pDescriptor = ipDescComp;
+}
+
+//main installing method
+void installer(uint8_t dataBuffer[], uint16_t length, CardApplet *newApplet){
+    uint16_t iPos = 0; //Position in applet buffer
+
+    bool headerInstall = installHeaderComp(dataBuffer,newApplet,&iPos);
+    if (!headerInstall){
+        return ;
+    }
+    bool dirInstall = installDirComp(dataBuffer,newApplet,&iPos);
+    if (!dirInstall){
+        return ;
+    }
+   
+    /*Split the IJC file into component blocks
+	*to facilitate component data manipulation.
+	 */
+    uint16_t appletCompSize = newApplet->absApp.pDir.componentSizes[TAG_APPLET_COMP - 1];
+    uint8_t pAppletComponent[appletCompSize];
+
+    uint16_t importCompSize = newApplet->absApp.pDir.componentSizes[TAG_IMPORT_COMP - 1];
+    uint8_t pImportComponent[importCompSize];
+
+    uint16_t constantPoolCompSize = newApplet->absApp.pDir.componentSizes[TAG_CONSTANTPOOL_COMP - 1];
+    uint8_t pConstPoolComponent[constantPoolCompSize];
+
+    uint16_t classCompSize = newApplet->absApp.pDir.componentSizes[TAG_CLASS_COMP - 1];
+    uint8_t pClassComponent[classCompSize];
+
+    uint16_t methodCompSize = newApplet->absApp.pDir.componentSizes[TAG_METHOD_COMP - 1];
+    uint8_t pMethodComponent[methodCompSize];
+
+    uint16_t staticFieldCompSize = newApplet->absApp.pDir.componentSizes[TAG_STATICFIELD_COMP - 1];
+    uint8_t pStaticFieldComponent[staticFieldCompSize];
+
+    uint16_t refLocCompSize = newApplet->absApp.pDir.componentSizes[TAG_REFERENCELOCATION_COMP - 1];
+    uint8_t pRefLocComponent[refLocCompSize];
+
+    uint16_t exportCompSize = newApplet->absApp.pDir.componentSizes[TAG_EXPORT_COMP - 1];
+    uint8_t pExportComponent[exportCompSize];
+
+    uint16_t descriptorCompSize = newApplet->absApp.pDir.componentSizes[TAG_DESCRIPTOR_COMP - 1];
+    uint8_t pDescriptorComponent[descriptorCompSize];
+
+    uint16_t debugCompSize = newApplet->absApp.pDir.componentSizes[TAG_DEBUG_COMP - 1];
+    uint8_t pDebugComponent[debugCompSize];
+
+    while(iPos < (length-1)){
+        uint8_t tag = readU1(dataBuffer, &iPos);
+        uint16_t compSize = readU2(dataBuffer, &iPos);
+        switch (tag){
+            case TAG_IMPORT_COMP:
+                for (uint16_t j=0;j<compSize;j++){
+                    pImportComponent[j] = readU1(dataBuffer, &iPos);
+                }
+                break;
+            case TAG_APPLET_COMP: 
+                for (uint16_t j=0;j<compSize;j++){
+                    pAppletComponent[j] = readU1(dataBuffer, &iPos);
+                }
+                break;
+            case TAG_CONSTANTPOOL_COMP: 
+                for (uint16_t j=0;j<compSize;j++){
+                    pConstPoolComponent[j] = readU1(dataBuffer, &iPos);
+                }
+                break;
+            case TAG_CLASS_COMP:
+                for (uint16_t j=0;j<compSize;j++){
+                    pClassComponent[j] = readU1(dataBuffer, &iPos);
+                }
+                break;
+            case TAG_METHOD_COMP:
+                for (uint16_t j=0;j<compSize;j++){
+                    pMethodComponent[j] = readU1(dataBuffer, &iPos);
+                }
+                break;
+            case TAG_STATICFIELD_COMP:
+                for (uint16_t j=0;j<compSize;j++){
+                    pStaticFieldComponent[j] = readU1(dataBuffer, &iPos);
+                }
+                break;
+            case TAG_REFERENCELOCATION_COMP:
+                for (uint16_t j=0;j<compSize;j++){
+                    pRefLocComponent[j] = readU1(dataBuffer, &iPos);
+                }
+                break;
+            case TAG_EXPORT_COMP:
+                for (uint16_t j=0;j<compSize;j++){
+                    pExportComponent[j] = readU1(dataBuffer, &iPos);
+                }
+                break;
+            case TAG_DESCRIPTOR_COMP:
+                for (uint16_t j=0;j<compSize;j++){
+                    pDescriptorComponent[j] = readU1(dataBuffer, &iPos);
+                }
+                break;
+            case TAG_DEBUG_COMP:
+                for (uint16_t j=0;j<compSize;j++){
+                    pDebugComponent[j] = readU1(dataBuffer, &iPos);
+                }
+                break;
+            default:
+                //nothing
+                break;
+        }
+    }
+    installAppletComp(pAppletComponent,newApplet);
+    bool importInstall = installImportComp(pImportComponent,newApplet);
+    if (!importInstall){
+        return;
+    }
+    installClassComp(pClassComponent,newApplet);
+    installConstPoolComp(pConstPoolComponent,newApplet);
+    installRefLocComp(pRefLocComponent,newApplet);
+    installStaticFieldComp(pStaticFieldComponent,newApplet);
+    installMethodComp(pMethodComponent,newApplet);
+    installExportComponent(pExportComponent,newApplet);
+    installDescriptorComp(pDescriptorComponent,newApplet);
 }
