@@ -508,7 +508,7 @@ void writeInstanceReferenceInMemory(AbstractApplet *pCA){
 void vmNew(Frame* currF, uint16_t index, AbstractApplet *pCA){
     CpInfo pCI = pCA->pConstantPool.constantPool[index];
     uint8_t byte1 = pCI.info[0];
-    if (byte1 & 0x80 == 0x80){ //external library
+    if ((byte1&0x80) == 0x80){ //external library
         uint8_t packageIndex = byte1 & 0x7F;
         PackageInfo pPI = pCA->pImport.packages[packageIndex];
         uint8_t length = sizeof(frameworkAID) /sizeof(uint8_t);
