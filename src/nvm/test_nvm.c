@@ -1,4 +1,5 @@
-#include "nvm.h"
+
+/*#include "nvm.h"
 #include "../applet.h"
 #include "../jcvm/util.h"
 
@@ -40,4 +41,4 @@ int main(void){
     }
 
     return 0;
-}
+}*/

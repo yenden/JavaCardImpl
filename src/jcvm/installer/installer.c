@@ -154,48 +154,6 @@ void installRefLocComp(uint8_t dataBuffer[],CardApplet *newApplet){
    //because our implementation dont use this component
    // An implementation has been done in go version
 }
-
-//StaticField installation
-void installStaticFieldComp(uint8_t dataBuffer[],CardApplet *newApplet){
-    uint16_t iPosa =0;
-    StaticFieldComponent ipStaticFieldComponent;
-    ipStaticFieldComponent.imageSize = readU2(dataBuffer, &iPosa);
-    ipStaticFieldComponent.referenceCount = readU2(dataBuffer, &iPosa);
-    ipStaticFieldComponent.arrayInitCount = readU2(dataBuffer, &iPosa);
-
-    //the purpose of this is to keep the nvm addresses of initialized arrays.
-    uint8_t arrayRef[ipStaticFieldComponent.arrayInitCount * 2];
-    uint16_t iPosArray = 0;
-    uint16_t arryAddress = FLASH_STATIC_ARRAY_ADDRESS;
-
-    for(uint16_t i=0; i < ipStaticFieldComponent.arrayInitCount;i++){
-        ipStaticFieldComponent.pArrayInit[i].typ = readU1(dataBuffer, &iPosa);
-        ipStaticFieldComponent.pArrayInit[i].count = readU2(dataBuffer, &iPosa);
-        for(uint8_t j=0;j < ipStaticFieldComponent.pArrayInit[i].count;j++){
-            ipStaticFieldComponent.pArrayInit[i].pValues[j] = readU1(dataBuffer, &iPosa);
-        }
-        //create the initialized array in nvm memory
-        createArrayInMemory(arryAddress, 
-                            ipStaticFieldComponent.pArrayInit[i].typ, 
-                            ipStaticFieldComponent.pArrayInit[i].count,
-                            ipStaticFieldComponent.pArrayInit[i].pValues
-                            );
-        //put the memory address (reference) in the arrayRef
-        arrayRef[iPosArray] = makeU1High(arryAddress);
-        iPosArray++;
-        arrayRef[iPosArray] = makeU1Low(arryAddress);
-        iPosArray++;
-        //move to next sector for the next initialized array
-        arryAddress += NvmSectorSize;
-    }
-    ipStaticFieldComponent.defaultValueCount = readU2(dataBuffer, &iPosa);
-    ipStaticFieldComponent.nondefaultValueCount = readU2(dataBuffer, &iPosa);
-    for(uint16_t i=0;i<ipStaticFieldComponent.nondefaultValueCount;i++){
-        ipStaticFieldComponent.pnondefaultValues[i] = readU1(dataBuffer, &iPosa);
-    }
-    createStaticFieldImage(ipStaticFieldComponent, arrayRef);
-    newApplet->absApp.pStaticField = ipStaticFieldComponent;
-}
 void createArrayInMemory(uint16_t address, uint8_t type, uint16_t count, uint8_t *arrayInit){
     //write the header of the array (type and length) in the first byte
     //and the arrayInit body in the second byte of the sector
@@ -240,6 +198,49 @@ void createStaticFieldImage(StaticFieldComponent ipStaticFieldComponent, uint8_t
     nvmWrite(FLASH_STATIC_IMAGE_ADDRESS,image,ipStaticFieldComponent.imageSize);
     
 }
+
+//StaticField installation
+void installStaticFieldComp(uint8_t dataBuffer[],CardApplet *newApplet){
+    uint16_t iPosa =0;
+    StaticFieldComponent ipStaticFieldComponent;
+    ipStaticFieldComponent.imageSize = readU2(dataBuffer, &iPosa);
+    ipStaticFieldComponent.referenceCount = readU2(dataBuffer, &iPosa);
+    ipStaticFieldComponent.arrayInitCount = readU2(dataBuffer, &iPosa);
+
+    //the purpose of this is to keep the nvm addresses of initialized arrays.
+    uint8_t arrayRef[ipStaticFieldComponent.arrayInitCount * 2];
+    uint16_t iPosArray = 0;
+    uint16_t arryAddress = FLASH_STATIC_ARRAY_ADDRESS;
+
+    for(uint16_t i=0; i < ipStaticFieldComponent.arrayInitCount;i++){
+        ipStaticFieldComponent.pArrayInit[i].typ = readU1(dataBuffer, &iPosa);
+        ipStaticFieldComponent.pArrayInit[i].count = readU2(dataBuffer, &iPosa);
+        for(uint8_t j=0;j < ipStaticFieldComponent.pArrayInit[i].count;j++){
+            ipStaticFieldComponent.pArrayInit[i].pValues[j] = readU1(dataBuffer, &iPosa);
+        }
+        //create the initialized array in nvm memory
+        createArrayInMemory(arryAddress, 
+                            ipStaticFieldComponent.pArrayInit[i].typ, 
+                            ipStaticFieldComponent.pArrayInit[i].count,
+                            ipStaticFieldComponent.pArrayInit[i].pValues
+                            );
+        //put the memory address (reference) in the arrayRef
+        arrayRef[iPosArray] = makeU1High(arryAddress);
+        iPosArray++;
+        arrayRef[iPosArray] = makeU1Low(arryAddress);
+        iPosArray++;
+        //move to next sector for the next initialized array
+        arryAddress += NvmSectorSize;
+    }
+    ipStaticFieldComponent.defaultValueCount = readU2(dataBuffer, &iPosa);
+    ipStaticFieldComponent.nondefaultValueCount = readU2(dataBuffer, &iPosa);
+    for(uint16_t i=0;i<ipStaticFieldComponent.nondefaultValueCount;i++){
+        ipStaticFieldComponent.pnondefaultValues[i] = readU1(dataBuffer, &iPosa);
+    }
+    createStaticFieldImage(ipStaticFieldComponent, arrayRef);
+    newApplet->absApp.pStaticField = ipStaticFieldComponent;
+}
+
 
 //Method Comp installation
 void installMethodComp(uint8_t dataBuffer[],CardApplet *newApplet){
