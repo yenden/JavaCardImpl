@@ -1,7 +1,7 @@
 CC	:=	gcc
 LD	:=	gcc
 
-MODULES	:=	nvm jcvm/installer	jcvm	/
+MODULES	:=	nvm jcvm/installer	jcvm	jcre/api	jcre	.
 SRC_DIR	:=	$(addprefix	src/,$(MODULES))
 BUILD_DIR	:=	$(addprefix build/,$(MODULES))
 
