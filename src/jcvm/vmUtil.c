@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include "vmUtil.h"
+
 
 void push(Frame *frame, JcvmValue value){
     if (frame->opStackTop + 1 == max_opStack) {

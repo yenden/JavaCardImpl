@@ -2,11 +2,10 @@
 #define _appletsMethods_h
 
 #include <stdbool.h>
-#include "vmUtil.h"
-#include "util.h"
-#include "installer/cardApplet.h"
+#include "interpreter.h"
 
 
 void callInstallMethod( VM *vm, CardApplet *cardApp);
+void callProcessMethod(VM *vm, CardApplet *cardApp);
 
 #endif

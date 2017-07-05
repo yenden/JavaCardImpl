@@ -1,10 +1,5 @@
-#include <stdio.h>
-#include <stdbool.h>
 #include "nativeMethods.h"
-#include "api/utilApi.h"
-#include "../client.h"
 #include "../apdus.h"
-
 
 uint8_t bufferRcv[BUFFER_RCV_LEN_MAX];
 uint8_t bufferSnd[BUFFER_SND_LEN_MAX];

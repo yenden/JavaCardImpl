@@ -1,7 +1,4 @@
-#include <stdbool.h>
 #include "appletsMethods.h"
-#include "interpreter.h"
-
 
 //method install of the Applet
 void callInstallMethod( VM *vm, CardApplet *cardApp){

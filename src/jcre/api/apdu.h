@@ -1,8 +1,11 @@
 #ifndef _apdu_h
 #define _apdu_h
 
+#include <stdio.h>
 #include <stdbool.h>
-#include <stdint.h>
+#include "../nativeMethods.h"
+#include "iso7816.h"
+#include "utilApi.h"
 
 extern bool selectingAppletFlag;
 

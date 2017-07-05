@@ -1,7 +1,7 @@
 #ifndef _classComp_h
 #define _classComp_h
 
-#include<stdint.h>
+#include <stdint.h>
 
 #define max_classes 1
 #define max_methods 10

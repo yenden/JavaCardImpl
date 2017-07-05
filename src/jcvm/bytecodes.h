@@ -1,8 +1,9 @@
 #ifndef _bytecodes_h
 #define _bytecodes_h
 
-#include "vmUtil.h"
-#include "installer/cardApplet.h"
+#include "../nvm/nvm.h"
+#include "../addresses.h"
+#include "appletsMethods.h"
 
 
 void aload(Frame *currF, uint8_t index);
@@ -43,5 +44,7 @@ void slookupswitch(Frame* currF, uint16_t deflt, uint16_t npairs, uint16_t *pPC)
 void sspush(Frame *currF, jcvm_short *value);
 void sconst(Frame *currF, jcvm_short *value);
 void sstore(Frame *currF, uint8_t value);
+
+bool deepEqual(uint8_t *aid1, uint8_t *aid2, uint16_t length);
 
 #endif

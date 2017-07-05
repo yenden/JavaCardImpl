@@ -1,7 +1,5 @@
 #include "ownerpin.h"
-#include "utilApi.h"
-#include "../../nvm/nvm.h"
-#include "iso7816.h"
+
 
 #define VALIDATED 0
 #define NUMFLAGS 1

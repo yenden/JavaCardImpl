@@ -1,7 +1,4 @@
-#include <stdlib.h>
 #include "interpreter.h"
-#include "appletsMethods.h"
-#include "bytecodes.h"
 
 static uint16_t status = 0x9000; 
 Map slookupswitchMap[20];

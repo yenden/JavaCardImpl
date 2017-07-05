@@ -1,10 +1,10 @@
 #ifndef _interpreter_h
 #define _interpreter_h
 
-#include <stdbool.h>
 #include "util.h"
 #include "vmUtil.h"
 #include "installer/cardApplet.h"
+#include "bytecodes.h"
 
 uint16_t getStatus();
 void setStatus(uint16_t st);

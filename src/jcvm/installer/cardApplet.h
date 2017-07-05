@@ -30,4 +30,10 @@ typedef struct CardApplet {
     AppletComponenent pApplet;
 }CardApplet;
 
+typedef struct MapAID_CardAPP{
+    uint8_t aid[16];
+    CardApplet cardApp;
+}MapAID_CardAPP;
+
+extern MapAID_CardAPP appletTable[max_Applet];
 #endif

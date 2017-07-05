@@ -1,8 +1,5 @@
-#include <stdio.h>
 #include "apdu.h"
-#include "../nativeMethods.h"
-#include "iso7816.h"
-#include "utilApi.h"
+
 
 #define BUFFERSIZE 37 //max size of apdu buffer stored in memory
                       // this is not the size of the received apdu

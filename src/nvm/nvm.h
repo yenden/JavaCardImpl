@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include "../addresses.h"
 
 #define NvmTotalSize 0x8000 //32kb
 #define NvmErasedValue 0xFF

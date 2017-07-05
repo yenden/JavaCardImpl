@@ -1,11 +1,4 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
 #include "installer.h"
-#include "../util.h"
-#include "../../nvm/nvm.h"
-#include "../../addresses.h"
-
 
 //Header component installation
 bool installHeaderComp(uint8_t dataBuffer[],CardApplet *newApplet, uint16_t* iPos){

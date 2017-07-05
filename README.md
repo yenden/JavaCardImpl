@@ -1,1 +1,1 @@
-# JavaCardImpl
+# JavaCard Implementation in C.

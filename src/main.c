@@ -4,21 +4,17 @@
 #include "jcvm/installer/installer.h"
 #include "jcvm/installer/cardApplet.h"
 #include "jcvm/appletsMethods.h"
-#include "jcvm/vmUtil.h"
-#include "applet.h"
+#include "jcre/dispatcher.h"
+#include "../applet.h"
 
-void createVM(VM *vm){
-    vm->frameTop = -1;
-    Frame frame;
-    frame.opStackTop = -1;
-    pushFrame(vm, frame);
-}
+
+CardApplet constantApplet;
 
 int main(void){
     init_nvm(); //allocate memory for non volatile memory
     CardApplet newApplet;
     VM vm;
-    createVM(&vm);
+    initVM(&vm);
     installer(applet, applet_buff_length, &newApplet);
     callInstallMethod(&vm, &newApplet);
     free_nvm(); //free memory for non volatile memory

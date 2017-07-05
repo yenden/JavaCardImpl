@@ -1,11 +1,6 @@
-#include <stdbool.h>
 #include "bytecodes.h"
-#include "interpreter.h"
-#include "../nvm/nvm.h"
-#include "../addresses.h"
-#include "appletsMethods.h"
 
-
+//MapAID_CardAPP appletTable[max_Applet];
 uint8_t frameworkAID[] = {0xa0, 0, 0, 0, 0x62, 1, 1};
 
 static uint16_t classInstanceCount = 0; //the address of the next class to be created
