@@ -26,6 +26,7 @@ void ifScmplt(Frame* currF, jcvm_byte branch, uint16_t *pPC);
 void ifScmpne(Frame* currF, jcvm_byte branch, uint16_t *pPC);
 void ifeq(Frame* currF, jcvm_byte branch, uint16_t *pPC);
 void ifne(Frame* currF, jcvm_byte branch, uint16_t *pPC);
+void ifge(Frame* currF, jcvm_byte branch, uint16_t *pPC);
 
 void invokevirtual(Frame* currF, uint16_t index, AbstractApplet *pCA, VM *vm);
 void invokespecial(Frame* currF, uint16_t index, AbstractApplet *pCA, VM *vm);

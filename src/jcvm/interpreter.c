@@ -110,6 +110,10 @@ void interpret(VM *vm, AbstractApplet *pCA, uint16_t *pPC){
                 bValue = readS1(pByteCode, pPC);
 			    ifne(currentFrame, bValue, pPC);
                 break;
+            case 0x63:
+                bValue = readS1(pByteCode, pPC);
+			    ifge(currentFrame, bValue, pPC);
+                break;
             case 0x8B:
                 indexInvok = readU2(pByteCode, pPC);
                 invokevirtual(currentFrame, indexInvok, pCA, vm);

@@ -248,6 +248,13 @@ void ifne(Frame* currF, jcvm_byte branch, uint16_t *pPC){
         (*pPC) -= 2;
     }
 }
+void ifge(Frame* currF, jcvm_byte branch, uint16_t *pPC){
+    jcvm_short value = pop(currF).value;
+    if(value >= 0){
+        (*pPC) += (uint16_t)branch;
+        (*pPC) -= 2;
+    }
+}
 
 
 void putfield(Frame* currF, uint8_t index, AbstractApplet *pCA){
