@@ -147,17 +147,26 @@ void installRefLocComp(uint8_t dataBuffer[],CardApplet *newApplet){
    //because our implementation dont use this component
    // An implementation has been done in go version
 }
-void createArrayInMemory(uint16_t address, uint8_t type, uint16_t count, uint8_t *arrayInit){
+void printArr(uint8_t *display,uint16_t len){
+    printf("Array static \t");
+    for(uint16_t i=0;i<len;i++){
+        printf("%d ",display[i]);
+    }
+    printf("\n"); 
+}
+void createArrayInMemory(uint16_t address, ArrayInitInfo *arrayInit){
     //write the header of the array (type and length) in the first byte
     //and the arrayInit body in the second byte of the sector
-    uint8_t array[8 + count];
-    array[0] = type;
-    array[1] = makeU1High(count);
-    array[2] = makeU1Low(count);
-    for(uint16_t i = 8; i < count + 8; i++){
-       array[i] = arrayInit[i];
+    uint8_t array[8 + arrayInit->count];
+    array[0] = arrayInit->typ;
+    array[1] = makeU1High(arrayInit->count);
+    array[2] = makeU1Low(arrayInit->count);
+    uint16_t j = 0;
+    for(uint16_t i = 8; i < (arrayInit->count + 8); i++){
+       array[i] = arrayInit->pValues[j];
+       j++;
     }
-    nvmWrite(address, array, 8 + count);
+    nvmWrite(address, array, 8 + arrayInit->count);
 }
 //create a static fiel image in non volatile memory
 void createStaticFieldImage(StaticFieldComponent ipStaticFieldComponent, uint8_t *arrayRef){
@@ -192,6 +201,7 @@ void createStaticFieldImage(StaticFieldComponent ipStaticFieldComponent, uint8_t
     
 }
 
+
 //StaticField installation
 void installStaticFieldComp(uint8_t dataBuffer[],CardApplet *newApplet){
     uint16_t iPosa =0;
@@ -213,9 +223,7 @@ void installStaticFieldComp(uint8_t dataBuffer[],CardApplet *newApplet){
         }
         //create the initialized array in nvm memory
         createArrayInMemory(arryAddress, 
-                            ipStaticFieldComponent.pArrayInit[i].typ, 
-                            ipStaticFieldComponent.pArrayInit[i].count,
-                            ipStaticFieldComponent.pArrayInit[i].pValues
+                            &ipStaticFieldComponent.pArrayInit[i]
                             );
         //put the memory address (reference) in the arrayRef
         arrayRef[iPosArray] = makeU1High(arryAddress);
