@@ -7,7 +7,6 @@
 #include "../nvm/nvm.h"
 #include "api/apdu.h"
 
-extern CardApplet constantApplet; 
 
 void initVM(VM *vm);
 void cardInit();

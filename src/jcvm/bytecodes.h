@@ -3,6 +3,8 @@
 
 #include "../nvm/nvm.h"
 #include "../addresses.h"
+#include "../jcre/api/apdu.h"
+#include "../jcre/api/ownerpin.h"
 #include "appletsMethods.h"
 
 
@@ -10,7 +12,7 @@ void aload(Frame *currF, uint8_t index);
 void astore(Frame* currF, uint8_t index);
 void baload(Frame *currF);
 void bastore(Frame *currF);
-void bspush(Frame* currF, jcvm_short *value);
+void bspush(Frame* currF, jcvm_byte value);
 void dup(Frame *currF);
 
 void getFieldThis(Frame* currF, uint8_t index, AbstractApplet *pCA);
@@ -41,8 +43,8 @@ void ssub(Frame* currF);
 
 void slookupswitch(Frame* currF, uint16_t deflt, uint16_t npairs, uint16_t *pPC);
 
-void sspush(Frame *currF, jcvm_short *value);
-void sconst(Frame *currF, jcvm_short *value);
+void sspush(Frame *currF, jcvm_short value);
+void sconst(Frame *currF, jcvm_short value);
 void sstore(Frame *currF, uint8_t value);
 
 bool deepEqual(uint8_t *aid1, uint8_t *aid2, uint16_t length);

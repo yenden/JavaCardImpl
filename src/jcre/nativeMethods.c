@@ -13,6 +13,14 @@ static uint16_t sw; //status word
 static uint8_t internCommand[5]; //command part of an apdu (CLA,INS,P1,P2, Lc)
 
 
+void printArray(uint8_t *display,uint16_t len){
+    printf("Array\t");
+    for(uint16_t i=0;i<len;i++){
+        printf("%d ",display[i]);
+    }
+    printf("\n"); 
+}
+
 void receiveATR(){
     printf("Receive PowerUp signal \n");
 	printf("Sending ATR \n");
@@ -24,16 +32,17 @@ void powerUp(){
 }
 
 uint8_t receive(){
-    static uint8_t i = 0;
     apduRcvPtr = 5;
     dataWithStatusFlag = false;
 
-    int length = sizeof(credit_test_APDU[i])/sizeof(uint8_t);
-    arrayCopy(credit_test_APDU[i], 0, bufferRcv, 0, length);
-    i++;
-    if(i >= APDU_TEST_BUFF_LEN){
-        i = 0;
-    }
+    int length = sizeof(credit_test_APDU[iterate])/sizeof(uint8_t);
+    arrayCopy(credit_test_APDU[iterate], 0, bufferRcv, 0, length);
+    printf("\niterate %d\n", iterate);
+    printArray(credit_test_APDU[iterate],14);
+    iterate++;
+    /*if(iterate >= APDU_TEST_BUFF_LEN){
+        iterate = 0;
+    }*/
     return length;
 }
 void sendStatus(uint16_t sw){

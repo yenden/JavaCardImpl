@@ -3,7 +3,7 @@
 static uint16_t status = 0x9000; 
 Map slookupswitchMap[20];
 
-static bool leaveVM = false;
+bool leaveVM = false;
 
 uint16_t getStatus(){
     return status;
@@ -18,16 +18,15 @@ void interpret(VM *vm, AbstractApplet *pCA, uint16_t *pPC){
     leaveVM = false;
     uint16_t value;
     jcvm_byte bValue;
+    jcvm_short sValue;
     uint8_t index;
     uint16_t indexInvok;
     uint8_t byte1;
-    uint16_t shortValue;
     jcvm_short deflt;
     uint16_t npairs;
     jcvm_short  match;
     jcvm_short pairs;
     uint8_t atype;
-    jcvm_short constant;
 
     while(!leaveVM){
         uint8_t bytecode = readU1(pByteCode,pPC);
@@ -60,9 +59,9 @@ void interpret(VM *vm, AbstractApplet *pCA, uint16_t *pPC){
 			    bastore(currentFrame);
                 break;
             case 0x10:
-			    byte1 = readU1(pByteCode, pPC);
-                deflt = (jcvm_short)byte1;
-			    bspush(currentFrame, &deflt);
+			    bValue = readS1(pByteCode, pPC);
+                sValue = (jcvm_short)bValue;
+			    bspush(currentFrame,sValue);
                 break;
             case 0x3D:
 			    dup(currentFrame);
@@ -150,28 +149,22 @@ void interpret(VM *vm, AbstractApplet *pCA, uint16_t *pPC){
 			    sadd(currentFrame);
                 break;
             case 0x03:
-                constant = 0;
-                sconst(currentFrame, &constant);
+                sconst(currentFrame, 0);
                 break;
             case 0x04:
-                constant = 1;
-                sconst(currentFrame, &constant);
+                sconst(currentFrame, 1);
                 break;
             case 0x05:
-                constant = 2;
-                sconst(currentFrame, &constant);
+                sconst(currentFrame, 2);
                 break;
             case 0x06:
-                constant = 3;
-                sconst(currentFrame, &constant);
+                sconst(currentFrame, 3);
                 break;
             case 0x07:
-                constant = 4;
-                sconst(currentFrame, &constant);
+                sconst(currentFrame, 4);
                 break;
             case 0x08:
-                constant = 5;
-                sconst(currentFrame, &constant);
+                sconst(currentFrame, 5);
                 break;
             case 0x1F:
 			    sload(currentFrame, 3); //sload_3
@@ -182,8 +175,8 @@ void interpret(VM *vm, AbstractApplet *pCA, uint16_t *pPC){
                 for (uint16_t k = 0; k < npairs; k++) {
                     match = readS2(pByteCode, pPC);
                     pairs = readS2(pByteCode, pPC);
-                    slookupswitchMap[k].key = &match;
-                    slookupswitchMap[k].value = &pairs;
+                    slookupswitchMap[k].key = match;
+                    slookupswitchMap[k].value = pairs;
                 }
                 slookupswitch(currentFrame, deflt, npairs, pPC);
                 break;
@@ -191,8 +184,8 @@ void interpret(VM *vm, AbstractApplet *pCA, uint16_t *pPC){
                 srem(currentFrame);
                 break;
             case 0x11:
-                shortValue = readU2(pByteCode, pPC);
-                sspush(currentFrame, &shortValue);
+                sValue = readS2(pByteCode, pPC);
+                sspush(currentFrame, sValue);
                 break;
             case 0x32: //sstore_3
 			    sstore(currentFrame, 3);

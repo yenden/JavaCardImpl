@@ -5,11 +5,11 @@
 
 
 #define max_types 29
-#define max_nibble 6
-#define max_fields 9
+#define max_nibble 10
+#define max_fields 10
 #define max_methods 10
 #define max_pool 30
-#define max_desc_classes 2
+#define max_desc_classes 4
 
 typedef struct MethodDescriptorInfo {
     uint8_t token;

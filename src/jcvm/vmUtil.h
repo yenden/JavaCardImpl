@@ -5,12 +5,12 @@
 #include "util.h"
 
 #define max_frame 5
-#define max_localVar 2
+#define max_localVar 6
 #define max_opStack 6
 
 typedef struct Map{
-    void *key;
-    void *value;
+    jcvm_short key;
+    jcvm_short value;
 }Map;
 
 extern Map slookupswitchMap[20];
@@ -19,7 +19,7 @@ enum JcvmType{byteType, shortType, refType};
 
 typedef struct JcvmValue{
     enum JcvmType type;
-    void *value;
+    jcvm_short value;
 }JcvmValue;
 
 typedef struct Frame{

@@ -10,5 +10,6 @@ uint16_t getStatus();
 void setStatus(uint16_t st);
 void interpret(VM *vm, AbstractApplet *pCA, uint16_t *pPC);
 void executeByteCode( VM *vm, AbstractApplet *pCA, uint16_t offset, bool invokerCond);
+extern bool leaveVM;
 
 #endif

@@ -7,8 +7,7 @@ MapAID_CardAPP appletTable[max_Applet];
 uint8_t apduBuff[MAX_APDU_LEN];
 uint8_t currentlySelectedApplet[16];
 
-uint16_t objReference;
-uint16_t apduBuffReference;
+
 
 bool isCardInitFlag = false;
 
@@ -28,7 +27,7 @@ void selectApdu(uint8_t *apdu){
     if(receiveLen == (uint16_t)apdu[4]){
         arrayCopy(apdu, 5, currentlySelectedApplet, 0, receiveLen);
     }
-    printf("Selecting aid");
+    printf("Selecting aid\n");
     selectingAppletFlag = true;
 }
 
@@ -58,6 +57,7 @@ bool processAndForward(VM *vm){
  //init the vm and store the reference of apdu array in its local variables.
  void initProcess(VM *vm){
     uint8_t arrayRef[2];
+    uint16_t objReference;
     initVM(vm);
     for(uint8_t i =8; i < 256; i = i+ 24){
         uint8_t aid[16];
@@ -69,10 +69,10 @@ bool processAndForward(VM *vm){
             break;
         }
     }
-    JcvmValue refToput = {refType, &objReference};
+    JcvmValue refToput = {refType, objReference};
     vm->stackFrame[vm->frameTop].localVariables[0] = refToput;
-    apduBuffReference = FLASH_APDU_ARRAY_BASE;
-    JcvmValue valueToput = {refType, &apduBuffReference};
+    uint16_t apduBuffReference = FLASH_APDU_ARRAY_BASE;
+    JcvmValue valueToput = {refType, apduBuffReference};
     vm->stackFrame[vm->frameTop].localVariables[1] = valueToput;
  }
 
@@ -92,7 +92,6 @@ void cardInit(){
     for(uint8_t i = 0; i < 16; i++){
         currentlySelectedApplet[i] = 0;
     }
-  //  installer(applet, applet_buff_length, &constantApplet);
     initApduArrayInNvm();
     isCardInitFlag = true;
 }
@@ -100,7 +99,7 @@ void cardInit(){
 
 void mainLoop(VM *vm){
     uint16_t sw = 0; //status word
-    while(true){
+    while(iterate <= 9){
         selectingAppletFlag = false;
         complete(apduBuff, sw);
         setStatus(0x9000);
@@ -110,7 +109,7 @@ void mainLoop(VM *vm){
             CardApplet *selectedApplet = NULL;
             for(uint8_t i = 0; i < max_Applet; i++){
                 if(deepEqual(appletTable[i].aid, currentlySelectedApplet,16)){
-                    *selectedApplet = appletTable[i].cardApp;
+                    selectedApplet = &appletTable[i].cardApp;
                     initProcess(vm);
                     callProcessMethod(vm, selectedApplet);
                     sw = getStatus();

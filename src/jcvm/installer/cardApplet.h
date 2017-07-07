@@ -36,4 +36,6 @@ typedef struct MapAID_CardAPP{
 }MapAID_CardAPP;
 
 extern MapAID_CardAPP appletTable[max_Applet];
+
+extern CardApplet constantApplet; 
 #endif

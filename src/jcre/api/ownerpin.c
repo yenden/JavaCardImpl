@@ -96,9 +96,9 @@ bool check(uint16_t ownerpinAddress, uint8_t *pin, uint16_t offset, uint8_t leng
     uint8_t maxPINSize = 0;
     uint8_t pinSize = 0;
     nvmRead(ownerpinAddress + OFFSET_MAX_PINSIZE, &maxPINSize, 1); 
-    uint8_t size = 5*8 + maxPINSize/8;
-    if(maxPINSize%8 != 0){
-        size++;
+    uint8_t size = 5*8 + (maxPINSize/8)*8;
+    if((maxPINSize%8 != 0)&&(maxPINSize > 8)){
+        size +=8;
     }
     uint8_t arrayOwnerPIN[size];
     nvmRead(ownerpinAddress, arrayOwnerPIN, size);
@@ -125,12 +125,12 @@ bool check(uint16_t ownerpinAddress, uint8_t *pin, uint16_t offset, uint8_t leng
 }
 
 //update the code PIn in NVM 
-uint16_t update(uint16_t ownerpinAddress, uint8_t *pin, uint16_t offset, uint8_t  length){
+uint8_t update(uint16_t ownerpinAddress, uint8_t *pin, uint16_t offset, uint8_t  length){
     uint8_t maxPINSize = 0;
     nvmRead(ownerpinAddress + OFFSET_MAX_PINSIZE, &maxPINSize, 1); 
-    uint8_t size = 5*8 + maxPINSize/8;
-    if(maxPINSize%8 != 0){
-        size++;
+    uint8_t size = 5*8 + (maxPINSize/8)*8;
+    if((maxPINSize%8 != 0)&&(maxPINSize > 8)){
+        size += 8;
     }
     uint8_t arrayOwnerPIN[size];
     nvmRead(ownerpinAddress, arrayOwnerPIN, size);
@@ -144,4 +144,5 @@ uint16_t update(uint16_t ownerpinAddress, uint8_t *pin, uint16_t offset, uint8_t
     setValidatedFlag(arrayOwnerPIN, false);
 
     nvmWrite(ownerpinAddress, arrayOwnerPIN, size);
+    return 0;
 }

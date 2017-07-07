@@ -13,6 +13,7 @@
 
 extern uint16_t apduSendPtr;
 extern uint8_t bufferRcv[BUFFER_RCV_LEN_MAX];
+extern uint8_t iterate;
 
 void receiveATR();
 void powerUp();

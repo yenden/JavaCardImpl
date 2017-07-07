@@ -314,7 +314,7 @@ void installDescriptorComp(uint8_t dataBuffer[],CardApplet *newApplet){
             uint8_t val = readU1(dataBuffer, &iPosa);
             ipDescComp.types.pTypeDesc[i].typeArray[k] = readHighShift(val);
             k++;
-            if(k==ipDescComp.types.pTypeDesc[i].nibbleCount){
+            if(k == ipDescComp.types.pTypeDesc[i].nibbleCount){
                 continue;
             }
             ipDescComp.types.pTypeDesc[i].typeArray[k] = readLow(val);

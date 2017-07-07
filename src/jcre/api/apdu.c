@@ -1,14 +1,14 @@
 #include "apdu.h"
 
 
-#define BUFFERSIZE 37 //max size of apdu buffer stored in memory
+#define BUFFERSIZE 20 //max size of apdu buffer stored in memory
                       // this is not the size of the received apdu
 
 static uint8_t Lc; //Lc is the data Length send in the apdu
 static uint8_t Le; //Le expected Length in the response
 static uint8_t Lr; //Lr apdu response Length
 static bool sendInProgressFlag = false; //SendInProgressFlag flag whiLe sending is not finished
-	
+uint8_t iterate;
 
 bool selectingAppletFlag = false;
 
@@ -16,7 +16,7 @@ bool selectingAppletFlag = false;
 //purpose: know if all data has been sent
 //or there is data remaining
 void setParam(uint16_t n){
-    if( n > 4){
+    if( n < 4){
         printf("Error; apdu length must be > 4");
     } else if(n == 4){ //apdu case 1 ---CLA|INS|P1|P2---
         Le = 0;
@@ -45,11 +45,11 @@ void complete(uint8_t *apduBuff, uint16_t status){
         result = t0RcvCommand(apduBuff);
     } else {
         t0SetStatus(status);
-        printf("Sending status word: %x", status);
+        printf("Sending status word: %x\n", status);
         result = t0SndStatusRcvCommand(apduBuff);
     }
     if (result == 0){
-        printf("imput/output error in compLete method");
+        printf("imput/output error in compLete method\n");
     }
     setParam(result);
     apduSendPtr = 0;
