@@ -301,8 +301,8 @@ void s2b(Frame* currF){
     push(currF, valueTopush);
 }
 void sadd(Frame* currF){
-    jcvm_short svalue1 = pop(currF).value;
     jcvm_short svalue2 = pop(currF).value;
+    jcvm_short svalue1 = pop(currF).value;
     jcvm_short result = svalue1 + svalue2;
     JcvmValue valueTopush = {shortType, result};
     push(currF, valueTopush);
@@ -313,16 +313,16 @@ void sload(Frame* currF, uint8_t index){
     push(currF, value);
 }
 void srem(Frame* currF){
-    jcvm_short svalue1 = pop(currF).value;
     jcvm_short svalue2 = pop(currF).value;
+    jcvm_short svalue1 = pop(currF).value;
     jcvm_short result = svalue1 - (svalue1 / svalue2) * svalue2;
     JcvmValue valueTopush = {shortType, result};
     push(currF, valueTopush);
 
 }
 void ssub(Frame* currF){
-    jcvm_short svalue1 = pop(currF).value;
     jcvm_short svalue2 = pop(currF).value;
+    jcvm_short svalue1 = pop(currF).value;
     jcvm_short result = svalue1 - svalue2;
     JcvmValue valueTopush = {shortType, result};
     push(currF, valueTopush);

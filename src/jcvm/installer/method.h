@@ -19,6 +19,5 @@ typedef struct MethodComponent {
     uint8_t pMethodInfo[max_methoInfo]; 
 }MethodComponent;
 
-//void executeByteCode(uint16_t offset, AbstractApplet *pCA, VM *vm, bool invokerCond, bool processCond);
 
 #endif

@@ -2,7 +2,7 @@
 #define _client_h
 #include <stdint.h>
 
-#define SND_BUF_LEN_MAX 18
+#define SND_BUF_LEN_MAX 20
 
 extern uint8_t sentFromCard[SND_BUF_LEN_MAX];
 

@@ -1,7 +1,11 @@
 #include "interpreter.h"
 
+//status is the status word
 static uint16_t status = 0x9000; 
+
+//a map for lookupswith pairs and jumps (see JCVM specifications)
 Map slookupswitchMap[20];
+
 
 bool leaveVM = false;
 
@@ -12,6 +16,7 @@ void setStatus(uint16_t st){
     status = st;
 }
 
+//main interpreting method
 void interpret(VM *vm, AbstractApplet *pCA, uint16_t *pPC){
     uint8_t *pByteCode = pCA->pMethod.pMethodInfo;
     Frame *currentFrame = &(vm->stackFrame[vm->frameTop]);
@@ -191,6 +196,10 @@ void interpret(VM *vm, AbstractApplet *pCA, uint16_t *pPC){
                 sValue = readS2(pByteCode, pPC);
                 sspush(currentFrame, sValue);
                 break;
+            case 0x29: //sstore
+                index = readU1(pByteCode, pPC);
+			    sstore(currentFrame, index);
+                break;
             case 0x32: //sstore_3
 			    sstore(currentFrame, 3);
                 break;
@@ -204,12 +213,16 @@ void interpret(VM *vm, AbstractApplet *pCA, uint16_t *pPC){
         }
     }
 }
+
+//if method is extended
 bool isExtended(uint8_t flag){
     return (flag & 0x80) == 0x80;
 }
+//if method is abstract
 bool isAbstract(uint8_t flag){
     return (flag & 0x40) == 0x40;
 }
+
 
 void executeByteCode( VM *vm, AbstractApplet *pCA, uint16_t offset, bool invokerCond){
     uint16_t iPos = offset - 1;

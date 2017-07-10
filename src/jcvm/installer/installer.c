@@ -147,13 +147,7 @@ void installRefLocComp(uint8_t dataBuffer[],CardApplet *newApplet){
    //because our implementation dont use this component
    // An implementation has been done in go version
 }
-void printArr(uint8_t *display,uint16_t len){
-    printf("Array static \t");
-    for(uint16_t i=0;i<len;i++){
-        printf("%d ",display[i]);
-    }
-    printf("\n"); 
-}
+
 void createArrayInMemory(uint16_t address, ArrayInitInfo *arrayInit){
     //write the header of the array (type and length) in the first byte
     //and the arrayInit body in the second byte of the sector
@@ -191,7 +185,7 @@ void createStaticFieldImage(StaticFieldComponent ipStaticFieldComponent, uint8_t
     //Update segment 4
 	//Segment 4 - primitive types initialized to non-default values.
     for(uint16_t k = 0; k < ipStaticFieldComponent.nondefaultValueCount; k++){
-        image[j] = ipStaticFieldComponent.pnondefaultValues[j];
+        image[j] = ipStaticFieldComponent.pnondefaultValues[k];
         j++;
     }
 

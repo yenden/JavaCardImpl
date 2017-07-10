@@ -14,7 +14,7 @@ static uint8_t internCommand[5]; //command part of an apdu (CLA,INS,P1,P2, Lc)
 
 
 void printArray(uint8_t *display,uint16_t len){
-    printf("Array\t");
+    printf("\nArray of client \t");
     for(uint16_t i=0;i<len;i++){
         printf("%d ",display[i]);
     }
@@ -35,14 +35,10 @@ uint8_t receive(){
     apduRcvPtr = 5;
     dataWithStatusFlag = false;
 
-    int length = sizeof(credit_test_APDU[iterate])/sizeof(uint8_t);
-    arrayCopy(credit_test_APDU[iterate], 0, bufferRcv, 0, length);
+    int length = sizeof(debit_test_APDU[iterate])/sizeof(uint8_t);
+    arrayCopy(debit_test_APDU[iterate], 0, bufferRcv, 0, length);
     printf("\niterate %d\n", iterate);
-    printArray(credit_test_APDU[iterate],14);
     iterate++;
-    /*if(iterate >= APDU_TEST_BUFF_LEN){
-        iterate = 0;
-    }*/
     return length;
 }
 void sendStatus(uint16_t sw){
@@ -54,9 +50,11 @@ void sendStatus(uint16_t sw){
         bufferSnd[apduSendPtr] = bs[0];
         bufferSnd[apduSendPtr + 1] = bs[1];
         arrayCopy(bufferSnd, 0, sentFromCard, 0, apduSendPtr + 2 );
+        printArray(sentFromCard, 20);
     } else {
         arrayCopy(bs, 0, sentFromCard, 0, 2);
     }
+   
 }
 
 uint16_t t0RcvCommand(uint8_t *apduCommand){

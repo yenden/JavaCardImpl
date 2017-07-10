@@ -99,7 +99,7 @@ void cardInit(){
 
 void mainLoop(VM *vm){
     uint16_t sw = 0; //status word
-    while(iterate <= 9){
+    while(iterate <= 11){
         selectingAppletFlag = false;
         complete(apduBuff, sw);
         setStatus(0x9000);

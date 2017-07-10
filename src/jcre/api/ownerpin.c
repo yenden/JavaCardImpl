@@ -38,7 +38,8 @@ void resetTriesRemaining(uint8_t *array){
 
 void decrementTriesRemaining(uint8_t *array){
      // triesLeft
-    array[OFFSET_TRIES_LEFT] --;
+    uint8_t result = array[OFFSET_TRIES_LEFT] - 1;
+    array[OFFSET_TRIES_LEFT] = result;
     
 }
 
@@ -81,7 +82,6 @@ void resetAndUnblock(uint16_t ownerpinAddress){
     nvmRead(ownerpinAddress, arrayOwnerPIN, size);
     resetTriesRemaining(arrayOwnerPIN);
     setValidatedFlag(arrayOwnerPIN, false);
-
     nvmWrite(ownerpinAddress, arrayOwnerPIN, size);
 }
 void reset(uint16_t ownerpinAddress){
@@ -97,7 +97,7 @@ bool check(uint16_t ownerpinAddress, uint8_t *pin, uint16_t offset, uint8_t leng
     uint8_t pinSize = 0;
     nvmRead(ownerpinAddress + OFFSET_MAX_PINSIZE, &maxPINSize, 1); 
     uint8_t size = 5*8 + (maxPINSize/8)*8;
-    if(((maxPINSize%8) != 0)&&(maxPINSize > 8)){
+    if((maxPINSize%8) != 0){
         size +=8;
     }
     uint8_t arrayOwnerPIN[size];
@@ -112,6 +112,7 @@ bool check(uint16_t ownerpinAddress, uint8_t *pin, uint16_t offset, uint8_t leng
     if(length > 0){
         pinSize = arrayOwnerPIN[OFFSET_PINSIZE];
         if((length != pinSize) || (noMoreTries == true)){
+            nvmWrite(ownerpinAddress,arrayOwnerPIN, size);
             return false;
         }
     }
@@ -122,6 +123,7 @@ bool check(uint16_t ownerpinAddress, uint8_t *pin, uint16_t offset, uint8_t leng
         nvmWrite(ownerpinAddress,arrayOwnerPIN, size);
         return true;
     }
+    nvmWrite(ownerpinAddress,arrayOwnerPIN, size);
     return false;
 }
 
@@ -130,7 +132,7 @@ uint8_t update(uint16_t ownerpinAddress, uint8_t *pin, uint16_t offset, uint8_t 
     uint8_t maxPINSize = 0;
     nvmRead(ownerpinAddress + OFFSET_MAX_PINSIZE, &maxPINSize, 1); 
     uint8_t size = 5*8 + (maxPINSize/8)*8;
-    if(((maxPINSize%8) != 0)&&(maxPINSize > 8)){
+    if((maxPINSize%8) != 0){
         size += 8;
     }
     uint8_t arrayOwnerPIN[size];
