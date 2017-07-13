@@ -1,6 +1,8 @@
 
 #include "nvm.h"
 
+#define null 0
+
 typedef struct NvmWord {
     uint8_t wordArray[NvmWordSize];
 }NvmWord;
@@ -41,13 +43,13 @@ string nvmCheckAccess(const uint16_t address){
     if (address > NvmTotalSize){
         return "ERR>NVM_CHECK_ACCESS_INVALID_ADDRESS";
     }
-    return NULL;
+    return null;
 }
 string nvmCheckSectorAccess(uint16_t length){
     if (length > NvmSectorSize){
         return "ERR>NVM_CHECK_SECTOR_ACCESS_INVALID";
     }
-    return NULL;
+    return null;
 }
 //erase methods
 void nvmEraseWord(NvmWord *nvmWord){
@@ -64,7 +66,7 @@ void nvmEraseSector(NvmSector *nvmSector){
 }
 string nvmErase(const uint16_t address){
     string err = nvmCheckAccess(address);
-    if (err != NULL){
+    if (err != null){
         return err;
     }
     NvmAddrProperties addressProperties={0,0,0};
@@ -72,19 +74,18 @@ string nvmErase(const uint16_t address){
     //identify the proper elements
 	nvmIdentifyAddr(address, p);
     nvmEraseSector(&nvmImage->nvmContent[addressProperties.sectorId]);
-	//printf("Erased value is : ", nvmImage->NvmContent[addressProperties.sectorId])
-	//printf("ERASED OK\n");
-	return NULL;
+	return null;
 }
-
+uint8_t changeBuff[sizeof(NvmImage)];
 //allocate the image
 void init_nvm(){
-    nvmImage = (NvmImage *)malloc(sizeof(NvmImage));
+   // nvmImage = (NvmImage *)malloc(sizeof(NvmImage));
+    nvmImage =  &changeBuff[0];
     //for the first use erase all the sectors
     uint16_t j = 0;
     for(uint16_t i = 0; i < (NvmTotalSize/NvmSectorSize); i++){
          nvmErase(FLASH_START_ADDRESS + j);
-         j +=NvmSectorSize;
+         j += NvmSectorSize;
     }
 }
 void free_nvm(){
@@ -94,11 +95,11 @@ void free_nvm(){
 //read method
 string nvmRead(const uint16_t address, uint8_t *destBuffer, uint16_t length){
     string err = nvmCheckAccess(address);
-    if (err !=NULL){
+    if (err !=null){
             return err;
     }
     err = nvmCheckSectorAccess(length);
-    if (err !=NULL){
+    if (err !=null){
             return err;
     }
     NvmAddrProperties addressProperties={0,0,0};
@@ -113,7 +114,7 @@ string nvmRead(const uint16_t address, uint8_t *destBuffer, uint16_t length){
         addr++;
         nvmIdentifyAddr(addr, p);  
     }
-    return NULL;
+    return null;
 }
 
 void copyToSector(NvmSector *srcSector, NvmSector *destSector){
@@ -127,7 +128,7 @@ void copyToSector(NvmSector *srcSector, NvmSector *destSector){
 //write method
 string nvmWrite(const uint16_t address, uint8_t *srcBuffer, uint16_t len){
     string err = nvmCheckAccess(address);
-    if (err!=NULL){
+    if (err!=null){
         return err;
     }
     NvmAddrProperties addressProperties={0,0,0};
@@ -153,6 +154,6 @@ string nvmWrite(const uint16_t address, uint8_t *srcBuffer, uint16_t len){
     //copy the content of the intermediateSector in the Nvm sector
     copyToSector(&intermediateSector,&(nvmImage->nvmContent[p->sectorId]));
     
-	return NULL;
+	return null;
 }
 

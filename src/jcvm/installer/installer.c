@@ -1,126 +1,132 @@
 #include "installer.h"
-
+#include "../../applet.h"
 //Header component installation
-bool installHeaderComp(uint8_t dataBuffer[],CardApplet *newApplet, uint16_t* iPos){
-    uint8_t i=0;
-    uint8_t tag = readU1(dataBuffer, iPos);
+bool installHeaderComp(CardApplet *newApplet){
+    uint16_t iPos = 0;
+    uint8_t tag = readU1(headerComp, &iPos);
     
     if (tag != TAG_HEADER_COMP) {
-        printf("Header tag is not correct. This is not an applet\n");
+        uint8_t ptr[] = "Header tag is not correct. This is not an applet";
+        myprintf(ptr, sizeof(ptr),CHAR);
         return false;
     }
-    (*iPos) += 6;
+    iPos += 6;
     HeaderComponent ipHeader;
-    ipHeader.minorVersion = readU1(dataBuffer, iPos);
-    ipHeader.majorVersion = readU1(dataBuffer, iPos);
-    ipHeader.flags = readU1(dataBuffer, iPos);
-    ipHeader.pThisPackage.minorVersion = readU1(dataBuffer, iPos);
-    ipHeader.pThisPackage.majorVersion = readU1(dataBuffer, iPos);
-    ipHeader.pThisPackage.AIDLength = readU1(dataBuffer, iPos);
-    for(i=0;i<ipHeader.pThisPackage.AIDLength;i++){
-        ipHeader.pThisPackage.AID[i] = readU1(dataBuffer, iPos);
-    }
-    ipHeader.pNameInfo.nameLength = readU1(dataBuffer, iPos);
-    for(i=0;i<ipHeader.pNameInfo.nameLength;i++){
-        ipHeader.pNameInfo.name[i] = readU1(dataBuffer, iPos);
-    }
+    ipHeader.minorVersion = readU1(headerComp, &iPos);
+    ipHeader.majorVersion = readU1(headerComp, &iPos);
+    ipHeader.flags = readU1(headerComp, &iPos);
+    ipHeader.pThisPackage.minorVersion = readU1(headerComp, &iPos);
+    ipHeader.pThisPackage.majorVersion = readU1(headerComp, &iPos);
+    ipHeader.pThisPackage.AIDLength = readU1(headerComp, &iPos);
+
+    ipHeader.pThisPackage.AID = &headerComp[iPos];
+    iPos += ipHeader.pThisPackage.AIDLength;
+
+    ipHeader.pNameInfo.nameLength = readU1(headerComp, &iPos);
+    ipHeader.pNameInfo.name = &headerComp[iPos];
+    iPos += ipHeader.pNameInfo.nameLength;
+   
     newApplet->absApp.pHeader = ipHeader;
     return true;
 }
 
 //Directory component installation
-bool installDirComp(uint8_t dataBuffer[],CardApplet *newApplet, uint16_t * iPos){
+bool installDirComp(CardApplet *newApplet){
+    uint16_t iPos = 0;
     DirectoryComponent ipDir;
-    uint8_t tag = dataBuffer[*iPos];
+    uint8_t tag = readU1(dirComp, &iPos);
     if( tag != TAG_DIR_COMP ){
-        printf("Directory Tag is not correct \n");
+        uint8_t ptr[] = "Directory Tag is not correct";
+        myprintf(ptr, sizeof(ptr),CHAR);
         return false;
     }
-    (*iPos) += 3;
+    iPos += 2;
     for (uint8_t i = 0; i<12; i++){
-        ipDir.componentSizes[i] = readU2(dataBuffer, iPos);
+        ipDir.componentSizes[i] = readU2(dirComp, &iPos);
     }
-    ipDir.pStaticFieldSize.imageSize = readU2(dataBuffer, iPos);
-    ipDir.pStaticFieldSize.arrayInitCount = readU2(dataBuffer, iPos);
-    ipDir.pStaticFieldSize.arrayInitSize = readU2(dataBuffer, iPos);
-    ipDir.importCount = readU1(dataBuffer, iPos);
-    ipDir.appletCount = readU1(dataBuffer, iPos);
+    ipDir.pStaticFieldSize.imageSize = readU2(dirComp, &iPos);
+    ipDir.pStaticFieldSize.arrayInitCount = readU2(dirComp, &iPos);
+    ipDir.pStaticFieldSize.arrayInitSize = readU2(dirComp, &iPos);
+    ipDir.importCount = readU1(dirComp, &iPos);
+   
+    ipDir.appletCount = readU1(dirComp, &iPos);
 
     //The subset of jcvm we consider doesn't have customize ClassComponent
 	//customcomp Number = 0
     //We thus need to step over or ignore that data
-    (*iPos)++;
+    iPos++;
     newApplet->absApp.pDir = ipDir;
     return true;
 }
 
 //Applet component Installation
-void installAppletComp(uint8_t dataBuffer[],CardApplet *newApplet){
-    uint16_t iPosa =0;
+void installAppletComp(CardApplet *newApplet){
+    uint16_t iPos = 0;
     uint16_t appletCompSize = newApplet->absApp.pDir.componentSizes[TAG_APPLET_COMP - 1];
     AppletComponenent ipAppletComponent;
+    iPos += 3;
     if (appletCompSize !=0) {
-        ipAppletComponent.count = readU1(dataBuffer, &iPosa);
+        ipAppletComponent.count = readU1(appletComp, &iPos);
         for (uint8_t i=0;i<ipAppletComponent.count;i++){
-            ipAppletComponent.applets[i].aidLength = readU1(dataBuffer, &iPosa);
-            for(uint8_t j=0;j<ipAppletComponent.applets[i].aidLength;j++){
-                ipAppletComponent.applets[i].pAID[j] = readU1(dataBuffer, &iPosa);
-            }
-            ipAppletComponent.applets[i].installMethodOffset = readU2(dataBuffer, &iPosa);
+            ipAppletComponent.applets[i].aidLength = readU1(appletComp, &iPos);
+            ipAppletComponent.applets[i].pAID = &appletComp[iPos];
+            iPos += ipAppletComponent.applets[i].aidLength;
+            ipAppletComponent.applets[i].installMethodOffset = readU2(appletComp, &iPos);
         }
     }
     newApplet->pApplet = ipAppletComponent;
 }
 
 //Import Component Installation
-bool installImportComp(uint8_t dataBuffer[],CardApplet *newApplet){
-    uint16_t iPosa =0;
+bool installImportComp(CardApplet *newApplet){
+    uint16_t iPos = 0;
     uint16_t importCompSize = newApplet->absApp.pDir.componentSizes[TAG_IMPORT_COMP - 1];
     ImportComponent ipImportComponent;
     if (importCompSize ==0) {
-        printf("import component which is a mandatory component is NULL");
+        uint8_t ptr[] = "import component which is a mandatory component is NULL";
+        myprintf(ptr, sizeof(ptr),CHAR);
         return false;
     } 
-    ipImportComponent.count = readU1(dataBuffer, &iPosa);
-    for(uint8_t i=0;i<ipImportComponent.count;i++){
-        ipImportComponent.packages[i].minorVersion = readU1(dataBuffer, &iPosa);
-        ipImportComponent.packages[i].majorVersion = readU1(dataBuffer, &iPosa);
-        ipImportComponent.packages[i].AIDLength = readU1(dataBuffer, &iPosa);
-        for(uint8_t j=0;j< ipImportComponent.packages[i].AIDLength;j++){
-            ipImportComponent.packages[i].AID[j] = readU1(dataBuffer, &iPosa);
-        }
+    iPos += 3;
+    ipImportComponent.count = readU1(importComp, &iPos);
+    for(uint8_t i = 0; i < ipImportComponent.count; i++){
+        ipImportComponent.packages[i].minorVersion = readU1(importComp, &iPos);
+        ipImportComponent.packages[i].majorVersion = readU1(importComp, &iPos);
+        ipImportComponent.packages[i].AIDLength = readU1(importComp, &iPos);
+        ipImportComponent.packages[i].AID = &importComp[iPos];
+        iPos += ipImportComponent.packages[i].AIDLength;
     }
     newApplet->absApp.pImport = ipImportComponent;
     return true;
 }
 
 //CLass component installation
-void installClassComp(uint8_t dataBuffer[],CardApplet *newApplet){
-    uint16_t iPosa =0;
+void installClassComp(CardApplet *newApplet){
+    uint16_t iPos = 3;
     uint16_t classCompSize = newApplet->absApp.pDir.componentSizes[TAG_CLASS_COMP - 1];
     //signature pool for remote methods.
     // In our subset we don't use remote methods
     // remote method parsing is in the JCVM go version
-    uint16_t sPoolLenght = readU2(dataBuffer, &iPosa);
+    uint16_t sPoolLenght = readU2(classComp, &iPos);
     ClassComponent ipClassComponent;
     // In this subset we didn't consider interfaces
     //intefaces parsing is in the go version
     uint16_t i = 0;
-    while(iPosa < classCompSize-1){
-        ipClassComponent.pClasses[i].bitfield = readU1(dataBuffer, &iPosa);
-        ipClassComponent.pClasses[i].superClassRef = readU2(dataBuffer, &iPosa);
-        ipClassComponent.pClasses[i].declaredInstanceSize = readU1(dataBuffer, &iPosa);
-        ipClassComponent.pClasses[i].firstReferenceToken = readU1(dataBuffer, &iPosa);
-        ipClassComponent.pClasses[i].referenceCount = readU1(dataBuffer, &iPosa);
-        ipClassComponent.pClasses[i].publicMethodTableBase = readU1(dataBuffer, &iPosa);
-        ipClassComponent.pClasses[i].publicMethodTableCount = readU1(dataBuffer, &iPosa);
-        ipClassComponent.pClasses[i].packageMethodTableBase = readU1(dataBuffer, &iPosa);
-        ipClassComponent.pClasses[i].packageMethodTableCount = readU1(dataBuffer, &iPosa);
+    while(iPos < (classCompSize-1)+3){
+        ipClassComponent.pClasses[i].bitfield = readU1(classComp, &iPos);
+        ipClassComponent.pClasses[i].superClassRef = readU2(classComp, &iPos);
+        ipClassComponent.pClasses[i].declaredInstanceSize = readU1(classComp, &iPos);
+        ipClassComponent.pClasses[i].firstReferenceToken = readU1(classComp, &iPos);
+        ipClassComponent.pClasses[i].referenceCount = readU1(classComp, &iPos);
+        ipClassComponent.pClasses[i].publicMethodTableBase = readU1(classComp, &iPos);
+        ipClassComponent.pClasses[i].publicMethodTableCount = readU1(classComp, &iPos);
+        ipClassComponent.pClasses[i].packageMethodTableBase = readU1(classComp, &iPos);
+        ipClassComponent.pClasses[i].packageMethodTableCount = readU1(classComp, &iPos);
         for(uint8_t j=0;j<ipClassComponent.pClasses[i].publicMethodTableCount;j++){
-            ipClassComponent.pClasses[i].publicMethodTable[j] = readU2(dataBuffer, &iPosa);
+            ipClassComponent.pClasses[i].publicMethodTable[j] = readU2(classComp, &iPos);
         }
         for(uint8_t j=0;j<ipClassComponent.pClasses[i].packageMethodTableCount;j++){
-            ipClassComponent.pClasses[i].packageMethodTable[j] = readU2(dataBuffer, &iPosa);
+            ipClassComponent.pClasses[i].packageMethodTable[j] = readU2(classComp, &iPos);
         }
         i++;
     }
@@ -128,21 +134,21 @@ void installClassComp(uint8_t dataBuffer[],CardApplet *newApplet){
 }
 
 //ConstantPool installation
-void installConstPoolComp(uint8_t dataBuffer[],CardApplet *newApplet){
-    uint16_t iPosa =0;
+void installConstPoolComp(CardApplet *newApplet){
+    uint16_t iPos = 3;
     ConstantPoolComponent ipConstPoolComponent;
-    ipConstPoolComponent.count = readU2(dataBuffer, &iPosa);
-    for(uint16_t i=0;i<ipConstPoolComponent.count;i++){
-        ipConstPoolComponent.constantPool[i].tag = readU1(dataBuffer, &iPosa);
-        for(uint8_t j=0; j<3;j++){
-            ipConstPoolComponent.constantPool[i].info[j] = readU1(dataBuffer, &iPosa);
+    ipConstPoolComponent.count = readU2(constantPoolComp, &iPos);
+    for(uint16_t i = 0; i < ipConstPoolComponent.count; i++){
+        ipConstPoolComponent.constantPool[i].tag = readU1(constantPoolComp, &iPos);
+        for(uint8_t j=0; j<3; j++){
+            ipConstPoolComponent.constantPool[i].info[j] = readU1(constantPoolComp, &iPos);
         }
     }
     newApplet->absApp.pConstantPool = ipConstPoolComponent;
 }
 
 //Ref Location Installation
-void installRefLocComp(uint8_t dataBuffer[],CardApplet *newApplet){
+void installRefLocComp(CardApplet *newApplet){
    //nothing 
    //because our implementation dont use this component
    // An implementation has been done in go version
@@ -157,7 +163,7 @@ void createArrayInMemory(uint16_t address, ArrayInitInfo *arrayInit){
     array[2] = makeU1Low(arrayInit->count);
     uint16_t j = 0;
     for(uint16_t i = 8; i < (arrayInit->count + 8); i++){
-       array[i] = arrayInit->pValues[j];
+       array[i] = *(arrayInit->pValues + j);
        j++;
     }
     nvmWrite(address, array, 8 + arrayInit->count);
@@ -185,7 +191,7 @@ void createStaticFieldImage(StaticFieldComponent ipStaticFieldComponent, uint8_t
     //Update segment 4
 	//Segment 4 - primitive types initialized to non-default values.
     for(uint16_t k = 0; k < ipStaticFieldComponent.nondefaultValueCount; k++){
-        image[j] = ipStaticFieldComponent.pnondefaultValues[k];
+        image[j] = *(ipStaticFieldComponent.pnondefaultValues + k);
         j++;
     }
 
@@ -197,24 +203,23 @@ void createStaticFieldImage(StaticFieldComponent ipStaticFieldComponent, uint8_t
 
 
 //StaticField installation
-void installStaticFieldComp(uint8_t dataBuffer[],CardApplet *newApplet){
-    uint16_t iPosa =0;
+void installStaticFieldComp(CardApplet *newApplet){
+    uint16_t iPos = 3;
     StaticFieldComponent ipStaticFieldComponent;
-    ipStaticFieldComponent.imageSize = readU2(dataBuffer, &iPosa);
-    ipStaticFieldComponent.referenceCount = readU2(dataBuffer, &iPosa);
-    ipStaticFieldComponent.arrayInitCount = readU2(dataBuffer, &iPosa);
-
+    ipStaticFieldComponent.imageSize = readU2(staticFieldComp, &iPos);
+    ipStaticFieldComponent.referenceCount = readU2(staticFieldComp, &iPos);
+    ipStaticFieldComponent.arrayInitCount = readU2(staticFieldComp, &iPos);
     //the purpose of this is to keep the nvm addresses of initialized arrays.
     uint8_t arrayRef[ipStaticFieldComponent.arrayInitCount * 2];
     uint16_t iPosArray = 0;
     uint16_t arryAddress = FLASH_STATIC_ARRAY_ADDRESS;
 
-    for(uint16_t i=0; i < ipStaticFieldComponent.arrayInitCount;i++){
-        ipStaticFieldComponent.pArrayInit[i].typ = readU1(dataBuffer, &iPosa);
-        ipStaticFieldComponent.pArrayInit[i].count = readU2(dataBuffer, &iPosa);
-        for(uint8_t j=0;j < ipStaticFieldComponent.pArrayInit[i].count;j++){
-            ipStaticFieldComponent.pArrayInit[i].pValues[j] = readU1(dataBuffer, &iPosa);
-        }
+    for(uint16_t i=0; i < ipStaticFieldComponent.arrayInitCount; i++){
+        ipStaticFieldComponent.pArrayInit[i].typ = readU1(staticFieldComp, &iPos);
+        ipStaticFieldComponent.pArrayInit[i].count = readU2(staticFieldComp,&iPos);
+        ipStaticFieldComponent.pArrayInit[i].pValues = &staticFieldComp[iPos];
+        iPos += ipStaticFieldComponent.pArrayInit[i].count;
+    
         //create the initialized array in nvm memory
         createArrayInMemory(arryAddress, 
                             &ipStaticFieldComponent.pArrayInit[i]
@@ -227,93 +232,97 @@ void installStaticFieldComp(uint8_t dataBuffer[],CardApplet *newApplet){
         //move to next sector for the next initialized array
         arryAddress += NvmSectorSize;
     }
-    ipStaticFieldComponent.defaultValueCount = readU2(dataBuffer, &iPosa);
-    ipStaticFieldComponent.nondefaultValueCount = readU2(dataBuffer, &iPosa);
-    for(uint16_t i=0;i<ipStaticFieldComponent.nondefaultValueCount;i++){
-        ipStaticFieldComponent.pnondefaultValues[i] = readU1(dataBuffer, &iPosa);
-    }
+    ipStaticFieldComponent.defaultValueCount = readU2(staticFieldComp, &iPos);
+    ipStaticFieldComponent.nondefaultValueCount = readU2(staticFieldComp, &iPos);
+    ipStaticFieldComponent.pnondefaultValues = &staticFieldComp[iPos];
+    iPos += ipStaticFieldComponent.nondefaultValueCount;
+    
     createStaticFieldImage(ipStaticFieldComponent, arrayRef);
     newApplet->absApp.pStaticField = ipStaticFieldComponent;
 }
 
 
 //Method Comp installation
-void installMethodComp(uint8_t dataBuffer[],CardApplet *newApplet){
-    uint16_t iPosa =0;
+void installMethodComp(CardApplet *newApplet){
+    uint16_t iPos = 3;
     MethodComponent ipMethodComp;
-    ipMethodComp.handlerCount = readU1(dataBuffer, &iPosa);
+    uint16_t methCompSize = newApplet->absApp.pDir.componentSizes[TAG_METHOD_COMP - 1];
+    ipMethodComp.handlerCount = readU1(methodComp, &iPos);
     for(uint16_t i=0;i<ipMethodComp.handlerCount;i++){
-         ipMethodComp.pExceptionHandlers[i].startOffset = readU2(dataBuffer, &iPosa);
-         ipMethodComp.pExceptionHandlers[i].activeLength = readU2(dataBuffer, &iPosa);
-         ipMethodComp.pExceptionHandlers[i].handlerOffset = readU2(dataBuffer, &iPosa);
-         ipMethodComp.pExceptionHandlers[i].catchTypeIndex = readU2(dataBuffer, &iPosa);
+         ipMethodComp.pExceptionHandlers[i].startOffset = readU2(methodComp, &iPos);
+         ipMethodComp.pExceptionHandlers[i].activeLength = readU2(methodComp, &iPos);
+         ipMethodComp.pExceptionHandlers[i].handlerOffset = readU2(methodComp, &iPos);
+         ipMethodComp.pExceptionHandlers[i].catchTypeIndex = readU2(methodComp, &iPos);
     }
-    for(uint16_t i=0;i<max_methoInfo;i++){
-        ipMethodComp.pMethodInfo[i] = readU1(dataBuffer, &iPosa);
-    }
+    ipMethodComp.methInfoSize = methCompSize - (8*ipMethodComp.handlerCount+1);
+    ipMethodComp.pMethodInfo = &methodComp[iPos];
+    iPos += ipMethodComp.methInfoSize;
+   
     newApplet->absApp.pMethod = ipMethodComp;
 }
 
 //Export comp installation
-void installExportComponent(uint8_t dataBuffer[],CardApplet *newApplet){
-    uint16_t iPosa =0;
+void installExportComponent(CardApplet *newApplet){
+    uint16_t iPos = 3;
     ExportComponent ipExportComp;
-    ipExportComp.classCount = readU1(dataBuffer, &iPosa);
-    for(uint16_t i=0;i<ipExportComp.classCount;i++){
-        ipExportComp.pClassExport[i].classOffset = readU2(dataBuffer, &iPosa);
-        ipExportComp.pClassExport[i].staticFieldCount = readU1(dataBuffer, &iPosa);
-        ipExportComp.pClassExport[i].staticMethodCount = readU1(dataBuffer, &iPosa);
-        for(uint16_t j=0;j<ipExportComp.pClassExport[i].staticFieldCount;j++){
-            ipExportComp.pClassExport[i].pStaticFieldOffsets[j]= readU2(dataBuffer, &iPosa);
-        }
-        for(uint16_t j=0;j<ipExportComp.pClassExport[i].staticMethodCount;j++){
-            ipExportComp.pClassExport[i].pStaticMethodsOffsets[j]= readU2(dataBuffer, &iPosa);
+    uint16_t expCompSize = newApplet->absApp.pDir.componentSizes[TAG_EXPORT_COMP - 1];
+    if(expCompSize != 0){
+        ipExportComp.classCount = readU1(exportComp, &iPos);
+        for(uint16_t i=0; i<ipExportComp.classCount; i++){
+            ipExportComp.pClassExport[i].classOffset = readU2(exportComp, &iPos);
+            ipExportComp.pClassExport[i].staticFieldCount = readU1(exportComp, &iPos);
+            ipExportComp.pClassExport[i].staticMethodCount = readU1(exportComp, &iPos);
+            for(uint16_t j=0;j<ipExportComp.pClassExport[i].staticFieldCount;j++){
+                    ipExportComp.pClassExport[i].pStaticFieldOffsets[j]= readU2(exportComp, &iPos);
+            }
+            for(uint16_t j=0;j<ipExportComp.pClassExport[i].staticMethodCount;j++){
+                    ipExportComp.pClassExport[i].pStaticMethodsOffsets[j]= readU2(exportComp, &iPos);
+            }
         }
     }
     newApplet->absApp.pExport = ipExportComp;
 }
 
 //Descriptor component installation
-void installDescriptorComp(uint8_t dataBuffer[],CardApplet *newApplet){
-    uint16_t iPosa = 0;
+void installDescriptorComp(CardApplet *newApplet){
+     uint16_t iPos = 3;
     DescriptorComponent ipDescComp;
     uint16_t descCompSize = newApplet->absApp.pDir.componentSizes[TAG_DESCRIPTOR_COMP - 1];
-    ipDescComp.classCount = readU1(dataBuffer, &iPosa);
+    ipDescComp.classCount = readU1(descriptorComp, &iPos);
      for(uint16_t i=0;i<ipDescComp.classCount;i++){
-        ipDescComp.classes[i].token = readU1(dataBuffer, &iPosa);
-        ipDescComp.classes[i].accessFlag = readU1(dataBuffer, &iPosa);
-        ipDescComp.classes[i].thisClassRef = readU2(dataBuffer, &iPosa);
-        iPosa++;
-        ipDescComp.classes[i].fieldCount = readU2(dataBuffer, &iPosa);
-        ipDescComp.classes[i].methodCount = readU2(dataBuffer, &iPosa);
-        for(uint16_t j=0;j<ipDescComp.classes[i].fieldCount;j++){
-            ipDescComp.classes[i].fields[j].token =  readU1(dataBuffer, &iPosa);
-            ipDescComp.classes[i].fields[j].pAF = readU1(dataBuffer, &iPosa);
-            ipDescComp.classes[i].fields[j].pFieldRef.fieldRef[0] = readU1(dataBuffer, &iPosa);
-            ipDescComp.classes[i].fields[j].pFieldRef.fieldRef[1] = readU1(dataBuffer, &iPosa);
-            ipDescComp.classes[i].fields[j].pFieldRef.fieldRef[2] = readU1(dataBuffer, &iPosa);
-            ipDescComp.classes[i].fields[j].pFieldType = readU2(dataBuffer, &iPosa);
+        ipDescComp.classes[i].token = readU1(descriptorComp, &iPos);
+        ipDescComp.classes[i].accessFlag = readU1(descriptorComp, &iPos);
+        ipDescComp.classes[i].thisClassRef = readU2(descriptorComp, &iPos);
+        iPos++;
+        ipDescComp.classes[i].fieldCount = readU2(descriptorComp, &iPos);
+        ipDescComp.classes[i].methodCount = readU2(descriptorComp, &iPos);
+        for(uint16_t j=0; j < ipDescComp.classes[i].fieldCount; j++){
+            ipDescComp.classes[i].fields[j].token =  readU1(descriptorComp, &iPos);
+            ipDescComp.classes[i].fields[j].pAF = readU1(descriptorComp, &iPos);
+            ipDescComp.classes[i].fields[j].pFieldRef.fieldRef[0] = readU1(descriptorComp, &iPos);
+            ipDescComp.classes[i].fields[j].pFieldRef.fieldRef[1] = readU1(descriptorComp, &iPos);
+            ipDescComp.classes[i].fields[j].pFieldRef.fieldRef[2] = readU1(descriptorComp, &iPos);
+            ipDescComp.classes[i].fields[j].pFieldType = readU2(descriptorComp, &iPos);
         }
-        for(uint16_t j=0;j<ipDescComp.classes[i].methodCount;j++){
-            ipDescComp.classes[i].methods[j].token = readU1(dataBuffer, &iPosa);
-            ipDescComp.classes[i].methods[j].pAF = readU1(dataBuffer, &iPosa);
-            ipDescComp.classes[i].methods[j].methodOffset = readU2(dataBuffer, &iPosa);
-            ipDescComp.classes[i].methods[j].typeOffset = readU2(dataBuffer, &iPosa);
-            ipDescComp.classes[i].methods[j].bytecodeCount = readU2(dataBuffer, &iPosa);
-            ipDescComp.classes[i].methods[j].exceptionHandlerCount = readU2(dataBuffer, &iPosa);
-            ipDescComp.classes[i].methods[j].exceptionHandlerIndex = readU2(dataBuffer, &iPosa);
+        for(uint16_t j=0; j < ipDescComp.classes[i].methodCount; j++){
+            ipDescComp.classes[i].methods[j].token = readU1(descriptorComp, &iPos);
+            ipDescComp.classes[i].methods[j].pAF = readU1(descriptorComp, &iPos);
+            ipDescComp.classes[i].methods[j].methodOffset = readU2(descriptorComp, &iPos);
+            ipDescComp.classes[i].methods[j].typeOffset = readU2(descriptorComp, &iPos);
+            ipDescComp.classes[i].methods[j].bytecodeCount = readU2(descriptorComp, &iPos);
+            ipDescComp.classes[i].methods[j].exceptionHandlerCount = readU2(descriptorComp, &iPos);
+            ipDescComp.classes[i].methods[j].exceptionHandlerIndex = readU2(descriptorComp, &iPos);
         }
     }
-    ipDescComp.types.constPoolCount = readU2(dataBuffer, &iPosa);
-    for(uint16_t i=0; i<ipDescComp.types.constPoolCount; i++){
-        ipDescComp.types.pConstantPoolTypes[i] = readU2(dataBuffer, &iPosa);
+    ipDescComp.types.constPoolCount = readU2(descriptorComp, &iPos);
+    ipDescComp.types.pConstantPoolTypes = &descriptorComp[iPos];
+    iPos += (2 * ipDescComp.types.constPoolCount);
 
-    }
-     for(uint16_t i=0; iPosa < descCompSize ; i++){
-        ipDescComp.types.pTypeDesc[i].nibbleCount = readU1(dataBuffer, &iPosa);
+     for(uint16_t i=0; iPos < 3 + descCompSize ; i++){
+        ipDescComp.types.pTypeDesc[i].nibbleCount = readU1(descriptorComp, &iPos);
         uint16_t k = 0;
         for(uint16_t j = 0; j < (ipDescComp.types.pTypeDesc[i].nibbleCount+1)/2; j++){
-            uint8_t val = readU1(dataBuffer, &iPosa);
+            uint8_t val = readU1(descriptorComp, &iPos);
             ipDescComp.types.pTypeDesc[i].typeArray[k] = readHighShift(val);
             k++;
             if(k == ipDescComp.types.pTypeDesc[i].nibbleCount){
@@ -327,120 +336,28 @@ void installDescriptorComp(uint8_t dataBuffer[],CardApplet *newApplet){
 }
 
 //main installing method
-void installer(uint8_t dataBuffer[], uint16_t length, CardApplet *newApplet){
+void installer(CardApplet *newApplet){
     uint16_t iPos = 0; //Position in applet buffer
 
-    bool headerInstall = installHeaderComp(dataBuffer,newApplet,&iPos);
+    bool headerInstall = installHeaderComp(newApplet);
     if (!headerInstall){
         return ;
     }
-    bool dirInstall = installDirComp(dataBuffer,newApplet,&iPos);
+   bool dirInstall = installDirComp(newApplet);
     if (!dirInstall){
         return ;
     }
-   
-    /*Split the IJC file into component blocks
-	*to facilitate component data manipulation.
-	 */
-    uint16_t appletCompSize = newApplet->absApp.pDir.componentSizes[TAG_APPLET_COMP - 1];
-    uint8_t pAppletComponent[appletCompSize];
-
-    uint16_t importCompSize = newApplet->absApp.pDir.componentSizes[TAG_IMPORT_COMP - 1];
-    uint8_t pImportComponent[importCompSize];
-
-    uint16_t constantPoolCompSize = newApplet->absApp.pDir.componentSizes[TAG_CONSTANTPOOL_COMP - 1];
-    uint8_t pConstPoolComponent[constantPoolCompSize];
-
-    uint16_t classCompSize = newApplet->absApp.pDir.componentSizes[TAG_CLASS_COMP - 1];
-    uint8_t pClassComponent[classCompSize];
-
-    uint16_t methodCompSize = newApplet->absApp.pDir.componentSizes[TAG_METHOD_COMP - 1];
-    uint8_t pMethodComponent[methodCompSize];
-
-    uint16_t staticFieldCompSize = newApplet->absApp.pDir.componentSizes[TAG_STATICFIELD_COMP - 1];
-    uint8_t pStaticFieldComponent[staticFieldCompSize];
-
-    uint16_t refLocCompSize = newApplet->absApp.pDir.componentSizes[TAG_REFERENCELOCATION_COMP - 1];
-    uint8_t pRefLocComponent[refLocCompSize];
-
-    uint16_t exportCompSize = newApplet->absApp.pDir.componentSizes[TAG_EXPORT_COMP - 1];
-    uint8_t pExportComponent[exportCompSize];
-
-    uint16_t descriptorCompSize = newApplet->absApp.pDir.componentSizes[TAG_DESCRIPTOR_COMP - 1];
-    uint8_t pDescriptorComponent[descriptorCompSize];
-
-    uint16_t debugCompSize = newApplet->absApp.pDir.componentSizes[TAG_DEBUG_COMP - 1];
-    uint8_t pDebugComponent[debugCompSize];
-
-    while(iPos < (length-1)){
-        uint8_t tag = readU1(dataBuffer, &iPos);
-        uint16_t compSize = readU2(dataBuffer, &iPos);
-        switch (tag){
-            case TAG_IMPORT_COMP:
-                for (uint16_t j=0;j<compSize;j++){
-                    pImportComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            case TAG_APPLET_COMP: 
-                for (uint16_t j=0;j<compSize;j++){
-                    pAppletComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            case TAG_CONSTANTPOOL_COMP: 
-                for (uint16_t j=0;j<compSize;j++){
-                    pConstPoolComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            case TAG_CLASS_COMP:
-                for (uint16_t j=0;j<compSize;j++){
-                    pClassComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            case TAG_METHOD_COMP:
-                for (uint16_t j=0;j<compSize;j++){
-                    pMethodComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            case TAG_STATICFIELD_COMP:
-                for (uint16_t j=0;j<compSize;j++){
-                    pStaticFieldComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            case TAG_REFERENCELOCATION_COMP:
-                for (uint16_t j=0;j<compSize;j++){
-                    pRefLocComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            case TAG_EXPORT_COMP:
-                for (uint16_t j=0;j<compSize;j++){
-                    pExportComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            case TAG_DESCRIPTOR_COMP:
-                for (uint16_t j=0;j<compSize;j++){
-                    pDescriptorComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            case TAG_DEBUG_COMP:
-                for (uint16_t j=0;j<compSize;j++){
-                    pDebugComponent[j] = readU1(dataBuffer, &iPos);
-                }
-                break;
-            default:
-                //nothing
-                break;
-        }
-    }
-    installAppletComp(pAppletComponent,newApplet);
-    bool importInstall = installImportComp(pImportComponent,newApplet);
-    if (!importInstall){
+    bool importInstall = installImportComp(newApplet);
+   if (!importInstall){
         return;
     }
-    installClassComp(pClassComponent,newApplet);
-    installConstPoolComp(pConstPoolComponent,newApplet);
-    installRefLocComp(pRefLocComponent,newApplet);
-    installStaticFieldComp(pStaticFieldComponent,newApplet);
-    installMethodComp(pMethodComponent,newApplet);
-    installExportComponent(pExportComponent,newApplet);
-    installDescriptorComp(pDescriptorComponent,newApplet);
+    installAppletComp(newApplet);
+    installClassComp(newApplet);
+    installMethodComp(newApplet);
+    installStaticFieldComp(newApplet);
+    installExportComponent(newApplet);
+    installConstPoolComp(newApplet);
+    installRefLocComp(newApplet);
+    installDescriptorComp(newApplet);
+
 }

@@ -5,8 +5,10 @@
 #include "../util.h"
 #include "../../nvm/nvm.h"
 #include "../../addresses.h"
+#include "../../myprintf.h"
 
 
-void installer(uint8_t dataBuffer[], uint16_t length, CardApplet *newApplet);
+
+void installer(CardApplet *newApplet);
 
 #endif

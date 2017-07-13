@@ -47,7 +47,8 @@ typedef struct TypeDescriptor{
 }TypeDescriptor;
 typedef struct TypeDescriptorInfo{
     uint16_t constPoolCount;
-    uint16_t pConstantPoolTypes[max_pool];
+    uint8_t *pConstantPoolTypes;
+    //uint16_t pConstantPoolTypes[max_pool];
     TypeDescriptor pTypeDesc[max_types];
 }TypeDescriptorInfo;
 

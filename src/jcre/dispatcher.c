@@ -27,7 +27,8 @@ void selectApdu(uint8_t *apdu){
     if(receiveLen == (uint16_t)apdu[4]){
         arrayCopy(apdu, 5, currentlySelectedApplet, 0, receiveLen);
     }
-    printf("Selecting aid\n");
+    uint8_t ptr[] = "Selecting aid";
+    myprintf(ptr, sizeof(ptr),CHAR);
     selectingAppletFlag = true;
 }
 

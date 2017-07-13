@@ -45,7 +45,8 @@ typedef struct PackageInfo{
     uint8_t minorVersion;
     uint8_t majorVersion;
     uint8_t AIDLength;
-    uint8_t AID[max_AID_Length];
+    uint8_t *AID;
+   // uint8_t AID[max_AID_Length];
 }PackageInfo;
 
 #endif

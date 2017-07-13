@@ -13,31 +13,12 @@ static uint16_t sw; //status word
 static uint8_t internCommand[5]; //command part of an apdu (CLA,INS,P1,P2, Lc)
 
 
-void printArray(uint8_t *display,uint16_t len){
-    printf("\nArray of client \t");
-    for(uint16_t i=0;i<len;i++){
-        printf("%d ",display[i]);
-    }
-    printf("\n"); 
-}
-
-void receiveATR(){
-    printf("Receive PowerUp signal \n");
-	printf("Sending ATR \n");
-    //TODO print ATR 
-}
-void powerUp(){
-    receiveATR();
-    printf("Card is up \n");
-}
-
 uint8_t receive(){
     apduRcvPtr = 5;
     dataWithStatusFlag = false;
 
     int length = sizeof(debit_test_APDU[iterate])/sizeof(uint8_t);
     arrayCopy(debit_test_APDU[iterate], 0, bufferRcv, 0, length);
-    printf("\niterate %d\n", iterate);
     iterate++;
     return length;
 }
@@ -50,7 +31,10 @@ void sendStatus(uint16_t sw){
         bufferSnd[apduSendPtr] = bs[0];
         bufferSnd[apduSendPtr + 1] = bs[1];
         arrayCopy(bufferSnd, 0, sentFromCard, 0, apduSendPtr + 2 );
-        printArray(sentFromCard, 20);
+        uint8_t ptr[]="Outgoing array";
+        myprintf(ptr, sizeof(ptr),CHAR);
+        myprintf(sentFromCard, SND_BUF_LEN_MAX, HEX);
+        myprintf("\n",sizeof("\n"),CHAR);
     } else {
         arrayCopy(bs, 0, sentFromCard, 0, 2);
     }

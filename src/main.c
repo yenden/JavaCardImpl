@@ -1,22 +1,22 @@
-#include <stdio.h>
+
 #include <stdlib.h>
 
 #include "jcvm/installer/installer.h"
 #include "jcre/dispatcher.h"
-#include "../applet.h"
+
 
 
 CardApplet constantApplet;
 
 
 int main(void){
-    init_nvm(); //allocate memory for non volatile memory
-    
+   init_nvm(); //allocate memory for non volatile memory
+    //CardApplet newApplet;
     iterate = 0;
     //installer
     VM vm;
     initVM(&vm);
-    installer(applet, applet_buff_length, &constantApplet);
+    installer(&constantApplet);
 
     //card initialization
     cardInit();

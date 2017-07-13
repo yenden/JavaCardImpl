@@ -16,7 +16,9 @@ typedef struct ExceptionHandlerInfo {
 typedef struct MethodComponent {
     uint8_t handlerCount;
     ExceptionHandlerInfo pExceptionHandlers[max_handlers];
-    uint8_t pMethodInfo[max_methoInfo]; 
+    uint16_t methInfoSize;
+    uint8_t *pMethodInfo;
+    //uint8_t pMethodInfo[max_methoInfo];
 }MethodComponent;
 
 

@@ -1,7 +1,7 @@
 #ifndef _dispatcher_h
 #define _dispatcher_h
 
-#include <stdio.h>
+
 #include <stdbool.h>
 #include "../jcvm/appletsMethods.h"
 #include "../nvm/nvm.h"

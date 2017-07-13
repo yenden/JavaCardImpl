@@ -1,5 +1,6 @@
 #include "vmUtil.h"
 
+#define null 0
 
 void push(Frame *frame, JcvmValue value){
     if (frame->opStackTop + 1 == max_opStack) {
@@ -29,7 +30,7 @@ JcvmValue pop(Frame *frame){
 
 Frame* popFrame(VM *vm){
     if(vm->frameTop == -1){
-        return NULL;
+        return null;
     }
     uint8_t last = vm->frameTop;
     vm->frameTop--;

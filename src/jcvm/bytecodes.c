@@ -440,10 +440,9 @@ void writeInstanceReferenceInMemory(AbstractApplet *pCA){
     array[0] = makeU1High(instanceRef);
     array[1] = makeU1Low(instanceRef);
     array[2] = 16;//aidLength;
-   // printf("aid %d", aidLength);
     uint8_t k = 8;
     for(uint8_t i = 0; i < aidLength ; i++){
-        array[k] = pckg.AID[i];
+        array[k] = *(pckg.AID + i);
         k++;
     }
      for(uint8_t i = aidLength; i < 16 ; i++){
@@ -812,7 +811,8 @@ void invokevirtual(Frame* currF, uint16_t index, AbstractApplet *pCA, VM *vm){
             //call appropriate virtual method
             callFrameworkMethods(currF, classToken, token);
         } else {
-            printf("Error: cannot invoke virtual package not found\n");
+            uint8_t ptr[] = "Error: cannot invoke virtual package not found";
+            myprintf(ptr, sizeof(ptr),CHAR);
         }
     } else {
         //It is an internal class library
@@ -857,7 +857,8 @@ void invokespecial(Frame* currF, uint16_t index, AbstractApplet *pCA, VM *vm){
                 //call appropriate virtual method
                 callFrameworkMethods(currF, classToken, token);
             } else {
-                printf("Error: cannot invoke special method, package not found\n");
+                uint8_t ptr[] = "Error: cannot invoke special method, package not found";
+                myprintf(ptr, sizeof(ptr),CHAR);
             }
         }
 
@@ -884,7 +885,8 @@ void vmNew(Frame* currF, uint16_t index, AbstractApplet *pCA){
             createFrameworkClass(currF, classToken);
             return;
         }
-        printf("Error: cannot create class package not found");
+        uint8_t ptr[] = "Error: cannot create class package not found";
+        myprintf(ptr, sizeof(ptr),CHAR);
     } else {
         //It is an internal class library
         uint16_t offset = makeU2(pCI.info[0], pCI.info[1]);

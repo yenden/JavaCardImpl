@@ -17,7 +17,8 @@ bool selectingAppletFlag = false;
 //or there is data remaining
 void setParam(uint16_t n){
     if( n < 4){
-        printf("Error; apdu length must be > 4");
+        uint8_t ptr[] = "Error; apdu length must be > 4";
+        myprintf(ptr,sizeof(ptr),CHAR);
     } else if(n == 4){ //apdu case 1 ---CLA|INS|P1|P2---
         Le = 0;
         Lc = 0; 
@@ -45,11 +46,18 @@ void complete(uint8_t *apduBuff, uint16_t status){
         result = t0RcvCommand(apduBuff);
     } else {
         t0SetStatus(status);
-        printf("Sending status word: %x\n", status);
+        uint8_t ptr[] = "Sending status word:";
+        myprintf(ptr, sizeof(ptr),CHAR);
+        uint8_t ptr2[2];
+        ptr2[0] = (status & 0xFF00) >> 8;
+        ptr2[1] = (status & 0x00FF);
+        myprintf(ptr2,2,HEX);
+        myprintf("\n",sizeof("\n"),CHAR);
         result = t0SndStatusRcvCommand(apduBuff);
     }
     if (result == 0){
-        printf("imput/output error in compLete method\n");
+        uint8_t ptr[] ="imput/output error in compLete method\n";
+        myprintf(ptr, sizeof(ptr),CHAR);
     }
     setParam(result);
     apduSendPtr = 0;

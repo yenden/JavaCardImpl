@@ -9,11 +9,11 @@ typedef int16_t jcvm_short; //short type
 typedef uint16_t jcvm_Reference;
 
 //methods
-uint8_t readU1(uint8_t* dataBuffer, uint16_t* iPos);
-uint16_t readU2(uint8_t* dataBuffer, uint16_t* iPos);
+uint8_t readU1(const uint8_t* dataBuffer, uint16_t* iPos);
+uint16_t readU2(const uint8_t* dataBuffer, uint16_t* iPos);
 
-jcvm_byte readS1(uint8_t* dataBuffer, uint16_t* iPos);
-jcvm_short readS2(uint8_t* dataBuffer, uint16_t* iPos);
+jcvm_byte readS1(const uint8_t* dataBuffer, uint16_t* iPos);
+jcvm_short readS2(const uint8_t* dataBuffer, uint16_t* iPos);
 
 uint8_t readHigh(uint8_t data);
 uint8_t readLow(uint8_t data);

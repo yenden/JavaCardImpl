@@ -9,7 +9,8 @@
 typedef struct PackageNameInfo PackageNameInfo;
 struct PackageNameInfo{
     uint8_t nameLength;
-	uint8_t name[max_Name_Length];       
+    uint8_t *name;
+	//uint8_t name[max_Name_Length];       
 };
 
 typedef struct HeaderComponent HeaderComponent;

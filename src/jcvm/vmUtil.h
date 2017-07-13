@@ -1,7 +1,7 @@
 #ifndef _vmUtil_h
 #define _vmUtil_h
 
-#include <stdio.h>
+
 #include "util.h"
 
 #define max_frame 5

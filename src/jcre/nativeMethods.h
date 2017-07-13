@@ -2,10 +2,9 @@
 #define _nativeMethods_h
 
 #include <stdbool.h>
-#include <stdio.h>
 #include "api/utilApi.h"
 #include "../client.h"
-
+#include"../../myprintf.h"
 
 
 #define BUFFER_RCV_LEN_MAX 25 //must be 255

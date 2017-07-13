@@ -10,7 +10,8 @@
 typedef struct ArrayInitInfo{
     uint8_t typ;
     uint16_t count;
-    uint8_t pValues[max_array_values];
+    uint8_t *pValues;
+    //uint8_t pValues[max_array_values];
 }ArrayInitInfo;
 
 typedef struct StaticFieldComponent {
@@ -20,8 +21,8 @@ typedef struct StaticFieldComponent {
     ArrayInitInfo pArrayInit[max_arrays];
     uint16_t defaultValueCount;
     uint16_t nondefaultValueCount;
-    uint8_t pnondefaultValues[max_nonDefault_values];
-  //  uint8_t pStaticFieldImage[];
+    uint8_t *pnondefaultValues;
+    //uint8_t pnondefaultValues[max_nonDefault_values];
 }StaticFieldComponent;
 
 #endif

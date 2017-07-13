@@ -11,7 +11,7 @@ typedef struct AppletComponenent {
     uint8_t count;
     struct {
         uint8_t aidLength;
-        uint8_t pAID[max_AID_Length];
+        uint8_t *pAID;
         uint16_t installMethodOffset;
     }applets[max_Applet];
 }AppletComponenent;

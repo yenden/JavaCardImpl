@@ -2,16 +2,19 @@
 
 //method install of the Applet
 void callInstallMethod( VM *vm, CardApplet *cardApp){
-    printf("Start installing \n");
+    uint8_t ptr[] = "Start installing.";
+    myprintf(ptr, sizeof(ptr),CHAR);
     uint16_t offset = cardApp->pApplet.applets[0].installMethodOffset;
 	executeByteCode(vm, &cardApp->absApp, offset, false);
-	printf("Install finished!\n");
+    uint8_t ptr2[] = "Install finished!";
+    myprintf(ptr2, sizeof(ptr2),CHAR);
 }
 
 //process method 
 void callProcessMethod(VM *vm, CardApplet *cardApp){
     uint16_t iPos = 0;
-    printf("Start processing the apdu ...");
+    uint8_t ptr[] = "Start processing the apdu ...";
+    myprintf(ptr, sizeof(ptr),CHAR);
     JcvmValue instanceClass = vm->stackFrame[vm->frameTop].localVariables[0];
     if(instanceClass.type != refType){
         return;
@@ -39,6 +42,7 @@ void callProcessMethod(VM *vm, CardApplet *cardApp){
 
     //execute process method
     executeByteCode(vm, &cardApp->absApp, processMethodOffset,false);
-    printf("Process finished!\n");
+    uint8_t ptr2[] = "Process finished!";
+    myprintf(ptr2, sizeof(ptr2),CHAR);
     
 }
