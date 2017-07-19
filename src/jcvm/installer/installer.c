@@ -1,5 +1,10 @@
 #include "installer.h"
 #include "../../applet.h"
+
+#define max_arrayInit 8
+#define max_imageSize 13
+#define max_arrayInitCount 4
+
 //Header component installation
 bool installHeaderComp(CardApplet *newApplet){
     uint16_t iPos = 0;
@@ -157,7 +162,7 @@ void installRefLocComp(CardApplet *newApplet){
 void createArrayInMemory(uint16_t address, ArrayInitInfo *arrayInit){
     //write the header of the array (type and length) in the first byte
     //and the arrayInit body in the second byte of the sector
-    uint8_t array[8 + arrayInit->count];
+    uint8_t array[8 + max_arrayInit];
     array[0] = arrayInit->typ;
     array[1] = makeU1High(arrayInit->count);
     array[2] = makeU1Low(arrayInit->count);
@@ -170,14 +175,14 @@ void createArrayInMemory(uint16_t address, ArrayInitInfo *arrayInit){
 }
 //create a static fiel image in non volatile memory
 void createStaticFieldImage(StaticFieldComponent ipStaticFieldComponent, uint8_t *arrayRef){
-    uint8_t image[ipStaticFieldComponent.imageSize];
+    uint8_t image[max_imageSize];
     uint16_t i = 0;
     uint16_t j = 0;
     //Build segment 1 and segment 2 data.
 	//Segment 1 - arrays of primitive types initialized by <clinit> methods.
-     for (i=0; i < ipStaticFieldComponent.arrayInitCount*2; i++){
+    for (i=0; i < ipStaticFieldComponent.arrayInitCount*2; i++){
         image[i] = arrayRef[i];
-     }
+    }
 	//Segment 2 - reference types initialized to null, including arrays.
     for (j=i; j < ipStaticFieldComponent.referenceCount*2; j++){
             image[j] = 0;
@@ -196,8 +201,8 @@ void createStaticFieldImage(StaticFieldComponent ipStaticFieldComponent, uint8_t
     }
 
     //Fill buffer in flash memory
-    //todo case if the size of image is > flash sector size 
-    nvmWrite(FLASH_STATIC_IMAGE_ADDRESS,image,ipStaticFieldComponent.imageSize);
+    //todo if the size of image is > flash sector size 
+    nvmWrite(FLASH_STATIC_IMAGE_ADDRESS,image,max_imageSize);
     
 }
 
@@ -210,7 +215,7 @@ void installStaticFieldComp(CardApplet *newApplet){
     ipStaticFieldComponent.referenceCount = readU2(staticFieldComp, &iPos);
     ipStaticFieldComponent.arrayInitCount = readU2(staticFieldComp, &iPos);
     //the purpose of this is to keep the nvm addresses of initialized arrays.
-    uint8_t arrayRef[ipStaticFieldComponent.arrayInitCount * 2];
+    uint8_t arrayRef[max_arrayInitCount * 2];
     uint16_t iPosArray = 0;
     uint16_t arryAddress = FLASH_STATIC_ARRAY_ADDRESS;
 
@@ -285,7 +290,7 @@ void installExportComponent(CardApplet *newApplet){
 
 //Descriptor component installation
 void installDescriptorComp(CardApplet *newApplet){
-     uint16_t iPos = 3;
+    uint16_t iPos = 3;
     DescriptorComponent ipDescComp;
     uint16_t descCompSize = newApplet->absApp.pDir.componentSizes[TAG_DESCRIPTOR_COMP - 1];
     ipDescComp.classCount = readU1(descriptorComp, &iPos);
@@ -317,8 +322,7 @@ void installDescriptorComp(CardApplet *newApplet){
     ipDescComp.types.constPoolCount = readU2(descriptorComp, &iPos);
     ipDescComp.types.pConstantPoolTypes = &descriptorComp[iPos];
     iPos += (2 * ipDescComp.types.constPoolCount);
-
-     for(uint16_t i=0; iPos < 3 + descCompSize ; i++){
+    for(uint16_t i=0; iPos < 3 + descCompSize ; i++){
         ipDescComp.types.pTypeDesc[i].nibbleCount = readU1(descriptorComp, &iPos);
         uint16_t k = 0;
         for(uint16_t j = 0; j < (ipDescComp.types.pTypeDesc[i].nibbleCount+1)/2; j++){
@@ -329,10 +333,10 @@ void installDescriptorComp(CardApplet *newApplet){
                 continue;
             }
             ipDescComp.types.pTypeDesc[i].typeArray[k] = readLow(val);
-            k++;           
+            k++;       
         }
      }
-     newApplet->absApp.pDescriptor = ipDescComp;
+    newApplet->absApp.pDescriptor = ipDescComp;
 }
 
 //main installing method

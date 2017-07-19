@@ -35,7 +35,7 @@ void selectApdu(uint8_t *apdu){
 //Install is used by the JCRE to install the currently selected applet
  void install(VM *vm){
      initVM(vm);
-     callInstallMethod(vm, &constantApplet);
+     callInstallMethod(vm, constantApplet);
  }
 
 bool processAndForward(VM *vm){
@@ -100,7 +100,7 @@ void cardInit(){
 
 void mainLoop(VM *vm){
     uint16_t sw = 0; //status word
-    while(iterate <= 11){
+    while(iterate <= 18){
         selectingAppletFlag = false;
         complete(apduBuff, sw);
         setStatus(0x9000);
@@ -110,7 +110,7 @@ void mainLoop(VM *vm){
             CardApplet *selectedApplet = NULL;
             for(uint8_t i = 0; i < max_Applet; i++){
                 if(deepEqual(appletTable[i].aid, currentlySelectedApplet,16)){
-                    selectedApplet = &appletTable[i].cardApp;
+                    selectedApplet = appletTable[i].cardApp;
                     initProcess(vm);
                     callProcessMethod(vm, selectedApplet);
                     sw = getStatus();

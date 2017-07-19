@@ -5,18 +5,19 @@
 #include "jcre/dispatcher.h"
 
 
-
-CardApplet constantApplet;
+CardApplet *constantApplet;
 
 
 int main(void){
    init_nvm(); //allocate memory for non volatile memory
-    //CardApplet newApplet;
     iterate = 0;
+
     //installer
+    uint8_t cardAppBuff[sizeof(CardApplet)];
+    constantApplet = (CardApplet *)&cardAppBuff[0];
     VM vm;
     initVM(&vm);
-    installer(&constantApplet);
+    installer(constantApplet);
 
     //card initialization
     cardInit();

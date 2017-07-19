@@ -32,10 +32,10 @@ typedef struct CardApplet {
 
 typedef struct MapAID_CardAPP{
     uint8_t aid[16];
-    CardApplet cardApp;
+    CardApplet *cardApp;
 }MapAID_CardAPP;
 
 extern MapAID_CardAPP appletTable[max_Applet];
 
-extern CardApplet constantApplet; 
+extern CardApplet *constantApplet; 
 #endif
