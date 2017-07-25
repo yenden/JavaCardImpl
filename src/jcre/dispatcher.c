@@ -6,7 +6,7 @@ MapAID_CardAPP appletTable[max_Applet];
 
 uint8_t apduBuff[MAX_APDU_LEN];
 uint8_t currentlySelectedApplet[16];
-uint8_t iterate;
+uint8_t iterate; //iteration in apdu test buffer
 
 
 bool isCardInitFlag = false;
@@ -18,9 +18,10 @@ void initVM(VM *vm){
     pushFrame(vm, frame);
 }
 
-//This function is used by the jcre to
-// retrive aid in the received apdu and select
-// the corresponding applet
+/*   This function is used by the jcre to
+    * retrive aid in the received apdu and select
+    * the corresponding applet
+*/
 void selectApdu(uint8_t *apdu){
     uint8_t aidBytes[16];
     uint16_t receiveLen = t0RcvData(apdu,5,MAX_APDU_LEN);
@@ -32,7 +33,9 @@ void selectApdu(uint8_t *apdu){
     selectingAppletFlag = true;
 }
 
-//Install is used by the JCRE to install the currently selected applet
+/*Install is used by the JCRE to install 
+ *the currently selected applet
+*/
  void install(VM *vm){
      initVM(vm);
      callInstallMethod(vm, constantApplet);
@@ -45,9 +48,7 @@ bool processAndForward(VM *vm){
             selectApdu(apduBuff);
             break;
         case INS_INSTALL : //install command
-        	//nadiaprintf(&iterate,1,HEX);
         	install(vm);
-            //nadiaprintf(&iterate,1,HEX);
             return false;
             break;
         default : 
@@ -63,7 +64,10 @@ bool processAndForward(VM *vm){
     uint8_t arrayRef[2];
     uint16_t objReference;
     initVM(vm);
-    for(uint8_t i =8; i < 256; i = i+ 24){
+    
+    //get the reference of the currently selected applet 
+    //in the page of nvm
+    for(uint8_t i =8; i < NvmSectorSize; i = i+ 24){
         uint8_t aid[16];
         nvmRead(FLASH_START_ADDRESS + i, aid, 16);
         if(deepEqual(aid, currentlySelectedApplet,16)){
@@ -73,6 +77,7 @@ bool processAndForward(VM *vm){
             break;
         }
     }
+    //push class instance reference and apdu buff reference  
     JcvmValue refToput = {refType, objReference};
     vm->stackFrame[vm->frameTop].localVariables[0] = refToput;
     uint16_t apduBuffReference = FLASH_APDU_ARRAY_BASE;
@@ -81,8 +86,9 @@ bool processAndForward(VM *vm){
  }
 
 
-//This function inits apdu array for incoming and outgoing apdus
-//It will be called once at card initialization
+/**This function inits apdu array for incoming and outgoing apdus
+  *It will be called once at card initialization
+*/
 void initApduArrayInNvm(){
     uint8_t array[3];
     uint16_t len = MAX_APDU_LEN;
@@ -101,20 +107,16 @@ void cardInit(){
 }
 
 
+/*main receiving APDU  loop*/
 void mainLoop(VM *vm){
     uint16_t sw = 0; //status word
     while(iterate <= 18){
-    	//nadiaprintf(&iterate,1,HEX);
         selectingAppletFlag = false;
         complete(apduBuff, sw);
-       // nadiaprintf(&iterate,1,HEX);
         setStatus(0x9000);
-      //  nadiaprintf(&iterate,1,HEX);
-        if(processAndForward(vm)){ // Dispatcher handles the SELECT
 
-        	//nadiaprintf("processforward",sizeof("processforward"),CHAR);
-			// APDU
-			// dispatch to the currently selected applet
+        // dispatch to the currently selected applet
+        if(processAndForward(vm)){  
             CardApplet *selectedApplet = NULL;
             for(uint8_t i = 0; i < max_Applet; i++){
                 if(deepEqual(appletTable[i].aid, currentlySelectedApplet,16)){
@@ -125,16 +127,14 @@ void mainLoop(VM *vm){
                     break;
                 }
             }
+            //if the applet is not in the JCRE's applet table
             if(selectedApplet == NULL){
                 sw = SW_UNKNOWN;
             }
-        } else { //install method
+        } else { //install method case
             sw = getStatus();
-            //nadiaprintf(&sw,2,HEX);
-           // nadiaprintf(&iterate,1,HEX);
         }
-       //nadiaprintf(&iterate,1,HEX);
     }
-    nadiaprintf("fin",3,CHAR);
+    nadiaprintf("End",3,CHAR);
 }
 

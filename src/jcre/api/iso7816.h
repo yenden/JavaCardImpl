@@ -1,7 +1,9 @@
 #ifndef _iso7816_h
 #define _iso7816_h
 
-// Mnemonics for the SW1,SW2 error codes
+/* Mnemonics for the SW1,SW2 error codes
+**
+*/
 
 	
 // Response status : No Error = (short)0x9000

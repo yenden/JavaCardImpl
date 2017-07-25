@@ -1,6 +1,8 @@
 
 #include "nvm.h"
 #include "../nadiaprintf.h"
+
+/*This file represent the wrapper of the Non Volatile Memory*/
 #define null 0
 
 typedef struct NvmWord {

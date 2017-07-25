@@ -102,6 +102,7 @@ bool check(uint16_t ownerpinAddress, uint8_t *pin, uint16_t offset, uint8_t leng
         size +=8;
     }
     uint8_t arrayOwnerPIN[size];
+    //read the entire ownerpin form memory
     nvmRead(ownerpinAddress, arrayOwnerPIN, size);
 
     setValidatedFlag(arrayOwnerPIN, false);
@@ -137,6 +138,7 @@ uint8_t update(uint16_t ownerpinAddress, uint8_t *pin, uint16_t offset, uint8_t 
         size += 8;
     }
     uint8_t arrayOwnerPIN[size];
+    //read the entire ownerpin form memory
     nvmRead(ownerpinAddress, arrayOwnerPIN, size);
 
     if(length > maxPINSize){

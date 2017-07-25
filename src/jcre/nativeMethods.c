@@ -7,23 +7,25 @@ uint8_t bufferSnd[BUFFER_SND_LEN_MAX];
 static uint16_t apduRcvPtr = 5;//It indices the received apdu buffer
 uint16_t apduSendPtr; //It indices the sending apdu buffer
 
-static bool dataWithStatusFlag = false; //data with status flag --if there is just data or data+SW
+ //data with status flag --if there is just data or data+SW
+static bool dataWithStatusFlag = false;
 static bool sendRcvCycleStarted = false;
 static uint16_t sw; //status word
-static uint8_t internCommand[5]; //command part of an apdu (CLA,INS,P1,P2, Lc)
+
+//command part of an apdu (CLA,INS,P1,P2, Lc)
+static uint8_t internCommand[5]; 
 
 
+/*receive apdu*/
 uint8_t receive(){
     apduRcvPtr = 5;
     dataWithStatusFlag = false;
-
     int length = sizeof(debit_test_APDU[iterate])/sizeof(uint8_t);
     arrayCopy(debit_test_APDU[iterate], 0, bufferRcv, 0, length);
-    //nadiaprintf("receive iterate next", sizeof("receive iterate next"),CHAR);
     iterate++;
-    //nadiaprintf(&iterate,1,HEX);
     return length;
 }
+
 void sendStatus(uint16_t sw){
     uint8_t bs[2];
     bs[0] = (uint8_t)(sw>>8);
@@ -33,6 +35,8 @@ void sendStatus(uint16_t sw){
         bufferSnd[apduSendPtr] = bs[0];
         bufferSnd[apduSendPtr + 1] = bs[1];
         arrayCopy(bufferSnd, 0, sentFromCard, 0, apduSendPtr + 2 );
+        
+        //printing
         uint8_t ptr[]="Outgoing array";
         nadiaprintf(ptr, sizeof(ptr),CHAR);
         nadiaprintf(sentFromCard, SND_BUF_LEN_MAX, HEX);
@@ -50,10 +54,8 @@ uint16_t t0RcvCommand(uint8_t *apduCommand){
     sendRcvCycleStarted = true;
     uint16_t receiveLen;
     receiveLen = receive();
-  //  nadiaprintf("receive iterate next", sizeof("receive iterate next"),CHAR);
     arrayCopy(bufferRcv, 0, apduCommand, 0, 5);
     arrayCopy(bufferRcv, 0, internCommand, 0, 5);
-   // nadiaprintf(&receiveLen,2,HEX);
    return receiveLen;
 }
 

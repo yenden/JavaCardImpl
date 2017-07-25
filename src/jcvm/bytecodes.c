@@ -74,7 +74,6 @@ void baload(Frame *currF){
     if(arrayComponentsType == byteType){ 
         uint16_t arrayLength = readU2(arrayHeader,&pos);
         uint8_t value;
-        //uint16_t address = arrayRef + 2 + index;
         uint16_t address = arrayRef + 8 + index;
         nvmRead(address, &value, 1);
         jcvm_byte val = (jcvm_byte)value;
@@ -186,7 +185,7 @@ void getstatic(Frame* currF, uint16_t index, AbstractApplet *pCA, uint16_t ins){
 }
 
 void goTo(Frame* currF, jcvm_byte branch, uint16_t *pPC){
-    (*pPC) += (uint16_t)branch;
+    (*pPC) += (uint16_t)branch; //jump
     (*pPC) -= 2;
 }
 
@@ -194,7 +193,7 @@ void ifScmpeq(Frame* currF, jcvm_byte branch, uint16_t *pPC){
     jcvm_short value2 = pop(currF).value;
     jcvm_short value1 = pop(currF).value;
     if(value1 == value2){
-        (*pPC) += (uint16_t)branch;
+        (*pPC) += (uint16_t)branch; //jump
         (*pPC) -= 2;
     }
 }
@@ -203,7 +202,7 @@ void ifScmpge(Frame* currF, jcvm_byte branch, uint16_t *pPC){
     jcvm_short value2 = pop(currF).value;
     jcvm_short value1 = pop(currF).value;
     if(value1 >= value2){
-        (*pPC) += (uint16_t)branch;
+        (*pPC) += (uint16_t)branch; //jump
         (*pPC) -= 2;
     }
 }
@@ -212,7 +211,7 @@ void ifScmple(Frame* currF, jcvm_byte branch, uint16_t *pPC){
     jcvm_short value2 = pop(currF).value;
     jcvm_short value1 = pop(currF).value;
     if(value1 <= value2){
-        (*pPC) += (uint16_t)branch;
+        (*pPC) += (uint16_t)branch; //jump
         (*pPC) -= 2;
     }
 }
@@ -221,7 +220,7 @@ void ifScmplt(Frame* currF, jcvm_byte branch, uint16_t *pPC){
     jcvm_short value2 = pop(currF).value;
     jcvm_short value1 = pop(currF).value;
     if(value1 < value2){
-        (*pPC) += (uint16_t)branch;
+        (*pPC) += (uint16_t)branch; //jump
         (*pPC) -= 2;
     }
 }
@@ -229,7 +228,7 @@ void ifScmpne(Frame* currF, jcvm_byte branch, uint16_t *pPC){
     jcvm_short value2 = pop(currF).value;
     jcvm_short value1 = pop(currF).value;
     if(value1 != value2){
-        (*pPC) += (uint16_t)branch;
+        (*pPC) += (uint16_t)branch; //jump
         (*pPC) -= 2;
     }
 }
@@ -237,21 +236,21 @@ void ifScmpne(Frame* currF, jcvm_byte branch, uint16_t *pPC){
 void ifeq(Frame* currF, jcvm_byte branch, uint16_t *pPC){
     jcvm_short value =(pop(currF)).value;
     if(value == 0){
-        (*pPC) += (uint16_t)branch;
+        (*pPC) += (uint16_t)branch; //jump
         (*pPC) -= 2;
     }
 }
 void ifne(Frame* currF, jcvm_byte branch, uint16_t *pPC){
     jcvm_short value = pop(currF).value;
     if(value != 0){
-        (*pPC) += (uint16_t)branch;
+        (*pPC) += (uint16_t)branch; //jump
         (*pPC) -= 2;
     }
 }
 void ifge(Frame* currF, jcvm_byte branch, uint16_t *pPC){
     jcvm_short value = pop(currF).value;
     if(value >= 0){
-        (*pPC) += (uint16_t)branch;
+        (*pPC) += (uint16_t)branch; //jump
         (*pPC) -= 2;
     }
 }
@@ -584,7 +583,7 @@ void callRegister(Frame *currF){
     uint16_t iPos =0;
     uint8_t numb = 0;
     jcvm_Reference ref = (jcvm_Reference)(pop(currF).value);
-    for(uint8_t i = 0; i < 256; i = i + 24){
+    for(uint8_t i = 0; i < NvmSectorSize; i = i + 24){
         uint8_t arrayRef[2];
         nvmRead(FLASH_START_ADDRESS + i, arrayRef, 2);
         jcvm_Reference refFromMem = readU2(arrayRef, &iPos);

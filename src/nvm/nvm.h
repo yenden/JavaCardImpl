@@ -9,7 +9,7 @@
 #define NvmTotalSize 2688//3072 //32kb
 #define NvmErasedValue 0xFF
 #define NvmWordSize 8
-#define NvmSectorSize 256 //4096
+#define NvmSectorSize 128//256 //4096
 
 typedef unsigned char* string;
 string nvmRead(const uint16_t address, uint8_t *destBuffer, uint16_t length);

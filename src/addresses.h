@@ -1,6 +1,8 @@
 #ifndef _addesses_h
 #define _addesses_h
 
+/*different offsets in memory*/
+
 #define FLASH_START_ADDRESS 0 //sector 0
 #define FLASH_STATIC_IMAGE_ADDRESS 256 //sector 1
 #define FLASH_STATIC_ARRAY_ADDRESS 512 //sector 2

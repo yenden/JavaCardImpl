@@ -8,8 +8,6 @@ void push(Frame *frame, JcvmValue value){
         return ;
     }
     frame->opStackTop++;
-   // nadiaprintf("stacktop",9,CHAR);
-    //nadiaprintf(&frame->opStackTop,1,HEX);
     frame->operandStack[frame->opStackTop] = value;
 }
 
