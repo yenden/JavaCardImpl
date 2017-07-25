@@ -3,50 +3,14 @@
 
 #define BUFFERSIZE 20 //max size of apdu buffer stored in memory
                       // this is not the size of the received apdu
-/*
-//Lc is the data Length send in the apdu
-static uint8_t Lc; 
-//Le expected Length in the response
-static uint8_t Le; 
-//Lr apdu response Length
-static uint8_t Lr; */
 
 static uint8_t apdu[5];
-//SendInProgressFlag flag whiLe sending is not finished
 static bool sendInProgressFlag = false; 
 
 
 bool selectingAppletFlag = false;
 
 
-/*setParam set apdu parameter(Lr,Lc and Le)
- *purpose: know if all data has been sent
- *or there is data remaining
- 
-void setParam(uint16_t n){
-    if( n < 4){
-        //print error
-        uint8_t ptr[] = "Error; apdu length must be > 4";
-        nadiaprintf(ptr,sizeof(ptr),CHAR);
-    } else if(n == 4){ //apdu case 1 ---CLA|INS|P1|P2---
-        Le = 0;
-        Lc = 0; 
-    } else if(n == 5){ //apdu case 2 ---CLA|INS|P1|P2|Le---
-		Lc = 0;
-		Le = bufferRcv[4];
-    } else if( n == 5+bufferRcv[4] ){ //apdu case 3 ---CLA|INS|P1|P2|Lc|Data---
-		Lc = bufferRcv[4];
-		Le = 0;
-	} else { //apdu case 4 ---CLA|INS|P1|P2|Lc|Data|Le---
-		Lc = bufferRcv[4];
-		Le = bufferRcv[n-1];
-	}
-	if (Le == 0x7F) {
-		Le = 0;
-	}
-	Lr = Le;
-}
-*/
 //Complete responds to the previous adpu and get next apdu
 void complete(uint8_t *apduHeader, uint16_t status){
     uint8_t result;
@@ -59,14 +23,12 @@ void complete(uint8_t *apduHeader, uint16_t status){
         t0SetStatus(status); //set status word
         result = t0SndStatusRcvCommand(apduHeader); //send status and wait for the next
     }
-   // if (result == 0){
+ 
     if (result != 0){
         uint8_t ptr[] ="imput/output error in compLete method\n";
         nadiaprintf(ptr, sizeof(ptr),CHAR);
     }
     arrayCopy(apduHeader, 0,apdu,0 ,5);
-   // setParam(result);
-    //apduSendPtr = 0;
 }
 
 /*GetSelectingAppLetFlag*/
@@ -74,27 +36,6 @@ bool getSelectingAppletFlag(){
     return selectingAppletFlag;
 }
 
-/* send61xx sends sw for data remaining
-* It send the status and waits for getResponse apdu
-
-uint16_t send61xx(uint16_t length){
-    uint16_t expLen = length;
-    uint16_t newLen;
-    do{
-        // Set SW1SW2 as 61xx (data remaining).
-        t0SetStatus(0x6100 + (length&0x00FF));
-        newLen = t0SndGetResponse();
-
-        //0xC0xx <=>invalid getResponse apdu
-		if(newLen > 0 && (newLen>>8 != 0xC0)) {
-			Le = (uint8_t)newLen;
-			expLen = (uint16_t)Le;
-		}
-    }while(expLen > length);
-
-    sendInProgressFlag = false;
-    return expLen;
-}*/
 
 /*SendBytes api framework function*/
 void sendBytes(uint8_t *array, uint16_t bOff, uint16_t length){
@@ -103,21 +44,6 @@ void sendBytes(uint8_t *array, uint16_t bOff, uint16_t length){
     t0SendData(array, offset, len);
     Lr -= (uint8_t)len;
 	Le = Lr;
-   /* uint16_t temp;
-    while(len >0 ){
-        temp = len;
-    	// Need to force GET RESPONSE for Case 4 & for partial blocks
-		if( (len != (uint16_t)Lr) ||( Lr != Le )|| sendInProgressFlag ){
-			temp = send61xx(len); //send data remainig status
-		}
-		
-		sendInProgressFlag = true;
-		offset += temp;
-		len -= temp;
-		Lr -= (uint8_t)temp;
-		Le = Lr;
-	}
-	sendInProgressFlag = false;*/
 }
 
 /*SendBytesLong : api function to send a long buffer*/
@@ -130,8 +56,6 @@ void sendBytesLong(uint16_t len, uint16_t bOff, uint8_t *outData, uint16_t bufLe
         if(length < sendLen) {
             sendLen = length;
         }
-        //arrayCopy(outData, bOff, apduBuff, 0, sendLen);
-       // sendBytes(apduBuff, 0, sendLen);
         sendBytes(outData, bOff, sendLen);
         length -= sendLen;
         offset += sendLen;
@@ -159,8 +83,6 @@ void setOutgoingAndSend(uint8_t *array, uint16_t len, uint16_t bOff){
 uint16_t receiveBytes(uint8_t *array, uint16_t offset, uint16_t len){
      uint16_t length = t0RcvData(apdu, offset);
      arrayCopy(apduBuffer,offset,array,0,length);
-    //Only APDUs case 3 and 4 are expected to call this method.
-  //  uint16_t length = t0RcvData(array, offset, len);
 	return length;
 }
 
@@ -168,7 +90,6 @@ uint16_t receiveBytes(uint8_t *array, uint16_t offset, uint16_t len){
 uint16_t setIncomingAndReceive(uint8_t *array, uint16_t len){
     uint16_t length = t0RcvData(apdu, OFFSET_CData);
     arrayCopy(apduBuffer,OFFSET_CData,array,0,length);
-    //uint16_t length = t0RcvData(array, OFFSET_CData, len);
     return length;
 }
 

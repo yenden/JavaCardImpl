@@ -26,8 +26,6 @@ uint16_t t0RcvCommand(uint8_t *apduCommand);
 uint16_t t0SndStatusRcvCommand(uint8_t *apduCommand);
 uint16_t t0RcvData(uint8_t *apduHeader, uint16_t offset);
 void t0SendData(uint8_t *apduBuff, uint16_t offset, uint16_t length);
-//void t0CopyToApduBuffer(uint8_t *apduBuff, uint16_t len);
-//uint16_t t0SndGetResponse();
 void t0SetStatus(uint16_t status);
 
 
