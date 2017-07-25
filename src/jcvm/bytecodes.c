@@ -673,10 +673,22 @@ void callSendBytesLong(Frame *currF){
     iPos = 0;
     nvmRead(apduArrayRef + 1, Len, 2);
     uint16_t apduArrayLen = readU2(Len, &iPos);
-    uint8_t apduArray[apduArrayLen];
-    nvmRead(apduArrayRef + 8, apduArray, apduArrayLen);
+   /* uint8_t apduArray[apduArrayLen];
+    nvmRead(apduArrayRef + 8, apduArray, apduArrayLen);*/
 
-    sendBytesLong(len, bOff, outData, apduArrayLen, apduArray);
+    sendBytesLong(len, bOff, outData, apduArrayLen/*, apduArray*/);
+}
+void callSendBytes(Frame *currF){
+	 uint16_t len = (uint16_t)(pop(currF).value);
+	 uint16_t bOff = (uint16_t)(pop(currF).value);
+	 jcvm_Reference apduArrayRef = (jcvm_Reference)(pop(currF).value);
+	 uint16_t iPos = 0;
+	 uint8_t Len[2];
+	 nvmRead(apduArrayRef + 1, Len, 2);
+	 uint16_t apduArrayLen = readU2(Len, &iPos);
+	 uint8_t apduArray[apduArrayLen];
+	 nvmRead(apduArrayRef + 8, apduArray, apduArrayLen);
+	 sendBytes(apduArray, bOff, len);
 }
 
 void callSetOutgoingAndSend(Frame *currF){
@@ -716,7 +728,8 @@ void callFrameworkMethods(Frame *currF, uint8_t classToken, uint8_t methodToken)
                     callReceivebytes(currF);
                     break;
                 case SEND_BYTES:
-                    //callSendBytes(&currF);
+                    //
+                    callSendBytes(currF);
                     break;
                 case SEND_BYTES_LONG:
                     callSendBytesLong(currF);

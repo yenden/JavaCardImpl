@@ -24,9 +24,9 @@ void initVM(VM *vm){
 */
 void selectApdu(uint8_t *apdu){
     uint8_t aidBytes[16];
-    uint16_t receiveLen = t0RcvData(apdu,5,MAX_APDU_LEN);
+    uint16_t receiveLen = t0RcvData(apdu,5);
     if(receiveLen == (uint16_t)apdu[4]){
-        arrayCopy(apdu, 5, currentlySelectedApplet, 0, receiveLen);
+        arrayCopy(apduBuffer, 5, currentlySelectedApplet, 0, receiveLen);
     }
     uint8_t ptr[] = "Selecting aid";
     nadiaprintf(ptr, sizeof(ptr),CHAR);
@@ -39,7 +39,7 @@ void selectApdu(uint8_t *apdu){
  void install(VM *vm){
      initVM(vm);
      callInstallMethod(vm, constantApplet);
-     //nadiaprintf(&iterate,1,HEX);
+     t0RcvData(apduBuff,5);
  }
 
 bool processAndForward(VM *vm){
@@ -53,6 +53,7 @@ bool processAndForward(VM *vm){
             break;
         default : 
             //nothing .... We don't support manage channel command
+            t0RcvData(apduBuff,5);
             break;
     }
     return true;
@@ -110,7 +111,7 @@ void cardInit(){
 /*main receiving APDU  loop*/
 void mainLoop(VM *vm){
     uint16_t sw = 0; //status word
-    while(iterate <= 18){
+    while(iterate <= 16){
         selectingAppletFlag = false;
         complete(apduBuff, sw);
         setStatus(0x9000);
